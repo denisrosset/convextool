@@ -17,9 +17,9 @@ C3 = C3';
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 rhov = 2*psiplus/7 + v * sigmaplus/7 + (5-v)*VsigmaplusV/7;
 coeffsv = CoeffsFromOperator2(rhov, 3, 3);
-options = sdpsettings(S, 'verbose', 1, 'solver', 'sdpt3');
-Cons = SymmetricExtensionCone(coeffsv, 2, false, true);
+options = sdpsettings('verbose', 1, 'solver', 'sdpt3');
+Cons = SymmetricExtensionCone(coeffsv, 2, true, true);
 optimize(Cons, -v, options);
-double(v)
+assert(abs(double(v) - 3) < 1e-5);
 diag = optimize(Cons, v, options);
-double(v)
+assert(abs(double(v) - 2) < 1e-4);

@@ -15,7 +15,7 @@ function [F D indPT] = GeneralizedGellMann(d)
 %
 % indPT  Indices of the basis elements that take a minus sign under partial transposition 
     F = cell(d, d);
-    F{1,1} = eye(d);
+    F{1,1} = sparse(eye(d));
     indPT = zeros(d, d);
     B = OrthoIntegerBasis(d);
     for k = 1:d
