@@ -15,11 +15,11 @@ v = sdpvar;
 rhov = state00*(1-v) + psiplus*v;
 coeffsv = CoeffsFromOperator2(rhov, 2, 2);
 disp('Without symmetry basis')
-Cons = SymmetricExtensionCone(coeffsv, 2, false);
+Cons = SymmetricExtensionCone(coeffsv, 2, false, false);
 optimize(Cons, -v, options);
 assert(abs(double(v) - 2/3) < 1e-5);
 disp('With symmetry basis')
-Cons = SymmetricExtensionCone(coeffsv, 2, true);
+Cons = SymmetricExtensionCone(coeffsv, 2, true, false);
 optimize(Cons, -v, options);
 assert(abs(double(v) - 2/3) < 1e-5);
 
