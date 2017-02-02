@@ -54,8 +54,13 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     for j = 1:k
         PPT{j} = sparse(dA*dBPPT(j)*fieldDim, dA*dBPPT(j)*fieldDim);
     end
-    
-    %    range = sparse(length(symIndices), 0);
+    if useSym
+        drange = dBext^2;
+        if usePPT
+            drange = drange + sum(dBPPT.^2);
+        end
+        range = zeros(drange, 0);
+    end
     binds = SymmetricCanonicalIndices(dB^2, k);
     for bind = binds
         bs = cell(1, k);
@@ -70,6 +75,14 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
             b = 0;
         end
         allbs = unique(perms(bs), 'rows');
+        B = sparse(dB^k, dB^k);
+        for r = 1:size(allbs, 1)
+            El = 1;
+            for c = 1:k
+                El = kron(El, FB{allbs(r, c)});
+            end
+            B = B + El;
+        end
         for a = 1:dA^2
             if b == 0
                 coeff = sdpvar;
@@ -77,29 +90,25 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
                 coeff = coeffs(a, b);
             end
             A = FA{a};
-            for r = 1:size(allbs, 1)
-                B = 1;
-                signPPT = ones(1, k);
-                for c = 1:k
-                    if indPTB(allbs(r, c))
-                        signPPT(1:c) = -signPPT(1:c);
-                    end
-                    B = kron(B, FB{allbs(r, c)});
-                end
-                if useSym
-                    S = S + coeff * ComplexToReal(kron(A, B(symIndices, symIndices)));
-                    if usePPT
-                        for k1 = 1:k
-                            PPT{k1} = PPT{k1} + signPPT(k1) * coeff * ...
-                                      ComplexToReal(kron(A, B(symIndicesPPT{k1}, symIndicesPPT{k1})));
-                        end
-                    end
-                else
-                    S = S + coeff * ComplexToReal(kron(A, B));
-                    if usePPT
-                        for k1 = 1:k
-                            PPT{k1} = PPT{k1} + signPPT(k1) * coeff * ComplexToReal(kron(A, B));
-                        end
+            if useSym
+                S = S + coeff * ComplexToReal(kron(A, B(symIndices, symIndices)));
+            else
+                S = S + coeff * ComplexToReal(kron(A, B));
+            end
+            if usePPT
+                PT = full(B); % partial transpositions are added one by one
+                for j = 1:k
+                    d1 = dB^(j-1);
+                    d2 = dB;
+                    d3 = dB^(k-j);
+                    PTsplit = reshape(PT, [d1 d2 d3 d1 d2 d3]);
+                    PTsplit = permute(PTsplit, [1 5 3 4 2 6]);
+                    PT = reshape(PTsplit, [dB^k dB^k]);
+                    if useSym
+                        PPT{j} = PPT{j} + coeff * ...
+                                 ComplexToReal(kron(A, PT(symIndicesPPT{j}, symIndicesPPT{j})));
+                    else
+                        PPT{j} = PPT{j} + coeff * ComplexToReal(kron(A, PT));
                     end
                 end
             end
