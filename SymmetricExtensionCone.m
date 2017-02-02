@@ -15,19 +15,20 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     [FB DB indPTB] = GeneralizedGellMann(dB);
     factor = DB(1)^(k-1); % not used (because we define a cone), but the symmetric extension has
                           % larger trace by this factor (because the basis is not normalized)
+    [~, B01] = BasisSymmetricSubspace(dB, k);
+    DupB = B01'*B01;
     
-    % Non-PPT constraint
+    
+    % indices of the rows/columns to preserve, because the
+    % matrix we consider has support and range in the symmetric
+    % subspace
+    %
+    % we consider the same for the PPT matrices
     symIndices = [];
     symIndicesPPT = cell(1, k);
     if useSym
-        for ind = 1:dA*dB^k
-            bs = cell(1, k);
-            [bs{:} a] = ind2sub([dB*ones(1, k) dA], ind); % kron inverts the indices
-            bs = cell2mat(bs);
-            if all(bs(2:end) - bs(1:end-1) >= 0) % is increasing
-                symIndices = [symIndices ind];
-            end
-        end
+        symIndices = bsxfun(@plus, (1:dA)', (SymmetricCanonicalIndices(dB, k) - 1)*dA);
+        symIndices = symIndices(:)';
         S = sparse(length(symIndices)*2, length(symIndices)*2);
         if usePPT
             for k1 = 1:k
@@ -47,6 +48,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
         end
     else
         d = dA*dB^k;
+        symIndices = 1:d;
         S = sparse(d*2, d*2);
         PPT = cell(1, k);
         for k1 = 1:k
@@ -54,6 +56,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
         end
     end
     coeffsExt = cell(dA^2*(dB^2)^k, 1);
+    range = sparse(length(symIndices), 0);
     for a = 1:dA^2
         A = FA{a};
         for bind = 1:(dB^2)^k
