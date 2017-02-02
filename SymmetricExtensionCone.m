@@ -26,37 +26,36 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     % we consider the same for the PPT matrices
     symIndices = [];
     symIndicesPPT = cell(1, k);
+    fieldDim = 2; % 1 if complex, 2 if real
     if useSym
-        symIndices = bsxfun(@plus, (0:dA-1)'*dB^k, SymmetricCanonicalIndices(dB, k));
-        symIndices = symIndices(:)';
-        S = sparse(length(symIndices)*2, length(symIndices)*2);
+        indicesB = SymmetricCanonicalIndices(dB, k);
+        symIndices = indicesB(:)';
+        dBext = length(symIndices);
+        dBPPT = zeros(1, k);
         if usePPT
+            % order is B1 ... Bk1 Bk1+1 ... Bk1+k2
+            % but warning: kron reverses the order compared to ind2sub
             for k1 = 1:k
                 k2 = k - k1;
-                for ind = 1:dA*dB^k
-                    bs1 = cell(1, k1);
-                    bs2 = cell(1, k2);
-                    [bs1{:} bs2{:} a] = ind2sub([dB*ones(1, k) dA], ind); % kron inverts indices
-                    bs1 = cell2mat(bs1);
-                    bs2 = cell2mat(bs2);
-                    if all(bs1(2:end) - bs1(1:end-1) >= 0) && all(bs2(2:end) - bs2(1:end-1) >= 0)
-                        symIndicesPPT{k1} = [symIndicesPPT{k1} ind];
-                    end
-                end
-                PPT{k1} = sparse(length(symIndicesPPT{k1})*2, length(symIndicesPPT{k1})*2);
+                % thus indices1 has factor
+                indices1 = (SymmetricCanonicalIndices(dB, k1) - 1) * dB^k2;
+                indices2 = SymmetricCanonicalIndices(dB, k2);
+                indicesB = bsxfun(@plus, indices1', indices2);
+                symIndicesPPT{k1} = indicesB(:)';
+                dBPPT(k1) = length(symIndicesPPT{k1});
             end
         end
     else
-        d = dA*dB^k;
-        symIndices = 1:d;
-        S = sparse(d*2, d*2);
-        PPT = cell(1, k);
-        for k1 = 1:k
-            PPT{k1} = sparse(d*2, d*2);
-        end
+        dBext = dB^k;
+        dBPPT = ones(1, k) * dB^k;
     end
-    coeffsExt = cell(dA^2*(dB^2)^k, 1);
-    range = sparse(length(symIndices), 0);
+    % order is A B1 ... Bk
+    S = sparse(dA*dBext*fieldDim, dA*dBext*fieldDim);
+    for j = 1:k
+        PPT{j} = sparse(dA*dBPPT(j)*fieldDim, dA*dBPPT(j)*fieldDim);
+    end
+    
+    %    range = sparse(length(symIndices), 0);
     for a = 1:dA^2
         A = FA{a};
         for bind = 1:(dB^2)^k
@@ -82,20 +81,19 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
                         end
                         B = kron(B, FB{allbs(r, c)});
                     end
-                    M = kron(A, B);
                     if useSym
-                        S = S + coeff * ComplexToReal(M(symIndices, symIndices));
+                        S = S + coeff * ComplexToReal(kron(A, B(symIndices, symIndices)));
                         if usePPT
                             for k1 = 1:k
                                 PPT{k1} = PPT{k1} + signPPT(k1) * coeff * ...
-                                          ComplexToReal(M(symIndicesPPT{k1}, symIndicesPPT{k1}));
+                                          ComplexToReal(kron(A, B(symIndicesPPT{k1}, symIndicesPPT{k1})));
                             end
                         end
                     else
-                        S = S + coeff * ComplexToReal(M);
+                        S = S + coeff * ComplexToReal(kron(A, B));
                         if usePPT
                             for k1 = 1:k
-                                PPT{k1} = PPT{k1} + signPPT(k1) * coeff * ComplexToReal(M);
+                                PPT{k1} = PPT{k1} + signPPT(k1) * coeff * ComplexToReal(kron(A, B));
                             end
                         end
                     end
