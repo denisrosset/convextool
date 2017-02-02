@@ -56,22 +56,27 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     end
     
     %    range = sparse(length(symIndices), 0);
-    for a = 1:dA^2
-        A = FA{a};
-        for bind = 1:(dB^2)^k
-            bs = cell(1, k);
-            [bs{:}] = ind2sub(dB^2*ones(1, k), bind);
-            bs = cell2mat(bs);
-            if all(bs(2:end) - bs(1:end-1) >= 0) % is increasing
-                switch sum(bs > 1)
-                  case 0 % Alice marginal
-                    coeff = coeffs(a, 1);
-                  case 1
-                    coeff = coeffs(a, bs(find(bs > 1)));
-                  otherwise
+    for bind = 1:(dB^2)^k
+        bs = cell(1, k);
+        [bs{:}] = ind2sub(dB^2*ones(1, k), bind);
+        bs = cell2mat(bs);
+        if all(bs(2:end) - bs(1:end-1) >= 0) % is increasing
+            switch sum(bs > 1)
+              case 0 % Alice marginal
+                b = 1;
+              case 1
+                b = bs(find(bs > 1));
+              otherwise
+                b = 0;
+            end
+            allbs = unique(perms(bs), 'rows');
+            for a = 1:dA^2
+                if b == 0
                     coeff = sdpvar;
+                else
+                    coeff = coeffs(a, b);
                 end
-                allbs = unique(perms(bs), 'rows');
+                A = FA{a};
                 for r = 1:size(allbs, 1)
                     B = 1;
                     signPPT = ones(1, k);
