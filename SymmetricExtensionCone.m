@@ -27,7 +27,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     symIndices = [];
     symIndicesPPT = cell(1, k);
     if useSym
-        symIndices = bsxfun(@plus, (1:dA)', (SymmetricCanonicalIndices(dB, k) - 1)*dA);
+        symIndices = bsxfun(@plus, (0:dA-1)'*dB^k, SymmetricCanonicalIndices(dB, k));
         symIndices = symIndices(:)';
         S = sparse(length(symIndices)*2, length(symIndices)*2);
         if usePPT

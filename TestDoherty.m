@@ -18,7 +18,7 @@ v = sdpvar;
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 rhov = 2*psiplus/7 + v * sigmaplus/7 + (5-v)*VsigmaplusV/7;
 coeffsv = CoeffsFromOperator2(rhov, 3, 3);
-options = sdpsettings('verbose', 1, 'solver', 'sedumi');
+options = sdpsettings('verbose', 1, 'solver', 'sdpt3');
 Cons = SymmetricExtensionCone(coeffsv, 2, true, true);
 optimize(Cons, -v, options);
 abs(double(v)-3)
