@@ -54,13 +54,12 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     for j = 1:k
         PPT{j} = sparse(dA*dBPPT(j)*fieldDim, dA*dBPPT(j)*fieldDim);
     end
-    if useSym
-        drange = dBext^2;
-        if usePPT
-            drange = drange + sum(dBPPT.^2);
-        end
-        range = zeros(drange, 0);
+    sdpdim = dA^2*dBext^2;
+    if usePPT
+        sdpdim = sdpdim + sum(dA^2*dBPPT.^2);
     end
+    fixed = zeros(sdpdim, 1);
+    basis = sparse(sdpdim, 0);
     binds = SymmetricCanonicalIndices(dB^2, k);
     for bind = binds
         bs = cell(1, k);
@@ -84,16 +83,12 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
             B = B + El;
         end
         for a = 1:dA^2
-            if b == 0
-                coeff = sdpvar;
-            else
-                coeff = coeffs(a, b);
-            end
             A = FA{a};
+            colVec = @(x) x(:);
             if useSym
-                S = S + coeff * ComplexToReal(kron(A, B(symIndices, symIndices)));
+                current = colVec(kron(A, B(symIndices, symIndices)));
             else
-                S = S + coeff * ComplexToReal(kron(A, B));
+                current = colVec(kron(A, B));
             end
             if usePPT
                 PT = full(B); % partial transpositions are added one by one
@@ -105,13 +100,31 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
                     PTsplit = permute(PTsplit, [1 5 3 4 2 6]);
                     PT = reshape(PTsplit, [dB^k dB^k]);
                     if useSym
-                        PPT{j} = PPT{j} + coeff * ...
-                                 ComplexToReal(kron(A, PT(symIndicesPPT{j}, symIndicesPPT{j})));
+                        current = [current; colVec(kron(A, PT(symIndicesPPT{j}, symIndicesPPT{j})))];
                     else
-                        PPT{j} = PPT{j} + coeff * ComplexToReal(kron(A, PT));
+                        current = [current; colVec(kron(A, PT))];
                     end
                 end
             end
+            if b == 0
+                basis(:, end + 1) = current;
+            else
+                fixed = fixed + coeffs(a, b) * current;
+            end
+        end
+    end
+    %    basis = double(orth(sym(full(basis)), 'skipnormalization'));
+    allinall = fixed + basis * sdpvar(size(basis, 2), 1);
+    dim = dA^2*dBext^2;
+    S = reshape(allinall(1:dim), dA*dBext, dA*dBext);
+    S = (S + S')/2;
+    allinall = allinall(dim+1:end);
+    if usePPT
+        for j = 1:k
+            dim = dA^2*dBPPT(j)^2;
+            PPT{j} = reshape(allinall(1:dim), dA*dBPPT(j), dA*dBPPT(j));
+            PPT{j} = (PPT{j} + PPT{j}')/2;
+            allinall = allinall(dim+1:end);
         end
     end
     MainCons = [S >= 0];
