@@ -19,7 +19,7 @@ for useSym = 0:1
         Cons = SymmetricExtensionConeDual(coeffsv, 2, [], useSym, realify);
         optimize(Cons, -v, options);
         assert(abs(double(v) - 2/3) < 1e-5);
-        Cons = SymmetricExtensionConePrimal(coeffsv, 2, 2, 2, [], useSym, realify);
+        Cons = SymmetricExtensionConePrimal(rhov, 2, 2, 2, [], useSym, realify);
         optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
         assert(abs(double(v) - 2/3) < 1e-5);
     end

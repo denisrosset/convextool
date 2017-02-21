@@ -20,7 +20,7 @@ for i = 1:3
             optimize(Cons, -v, options);
             [double(v)  vs(i)]
             assert(abs(double(v) - vs(i)) < 1e-5);
-            Cons = SymmetricExtensionConePrimal(coeffsv, 2, 2, ks(i), [], useSym, realify);
+            Cons = SymmetricExtensionConePrimal(rhov, 2, 2, ks(i), [], useSym, realify);
             optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
             [double(v)  vs(i)]
             assert(abs(double(v) - vs(i)) < 1e-5);

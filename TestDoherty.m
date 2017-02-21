@@ -30,7 +30,7 @@ for useSym = 0:1
         assert(abs(double(v) - 2) < 1e-4);
         abs(double(v)-2)
         % primal formulation
-        Cons = SymmetricExtensionConePrimal(coeffsv, 3, 3, 2, 'doherty', useSym, realify);
+        Cons = SymmetricExtensionConePrimal(rhov, 3, 3, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
         abs(double(v)-3)
         assert(abs(double(v) - 3) < 1e-4);
