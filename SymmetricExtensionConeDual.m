@@ -1,5 +1,7 @@
-function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, ppt, useSym, realify)
+function [Cons MainCons PPTCons] = SymmetricExtensionConeDual(coeffs, k, ppt, useSym, realify)
 % SymmetricExtensionCone Compute SDP constraints corresponding to symmetric extension cones
+%
+% Formulation in the YALMIP dual canonical form (= using inequalities)
 %
 % INPUTS
 % coeffs     (dA^2)x(dB^2) matrix of type double/sdpvar containing the coefficients
@@ -39,7 +41,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, ppt, useSym
         assert(all(ppt >= 1));
         assert(all(ppt <= k));
     end
-    usePPT = ~isequal(ppt, []);
+    usePPT = length(ppt) > 0;
     dA = sqrt(size(coeffs, 1));
     dB = sqrt(size(coeffs, 2));
     [FA DA indPTA] = GeneralizedGellMann(dA);

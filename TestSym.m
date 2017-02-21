@@ -9,7 +9,7 @@ coeffsv = CoeffsFromOperator2(rhov, 2, 2);
 values = [];
 for realify = 0:1
     for useSym = 0:1
-        Cons = SymmetricExtensionCone(coeffsv, 4, 'doherty', useSym, realify);
+        Cons = SymmetricExtensionConeDual(coeffsv, 4, 'doherty', useSym, realify);
         optimize(Cons, -v, options);
         values = [values double(v)];
     end

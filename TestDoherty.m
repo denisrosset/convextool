@@ -21,11 +21,20 @@ coeffsv = CoeffsFromOperator2(rhov, 3, 3);
 options = sdpsettings('verbose', 1, 'solver', 'sedumi');
 for useSym = 0:1
     for realify = 0:1
-        Cons = SymmetricExtensionCone(coeffsv, 2, 'doherty', useSym, realify);
+        % dual formulation
+        Cons = SymmetricExtensionConeDual(coeffsv, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, options);
         abs(double(v)-3)
         assert(abs(double(v) - 3) < 1e-4);
         diag = optimize(Cons, v, options);
+        assert(abs(double(v) - 2) < 1e-4);
+        abs(double(v)-2)
+        % primal formulation
+        Cons = SymmetricExtensionConePrimal(coeffsv, 3, 3, 2, 'doherty', useSym, realify);
+        optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
+        abs(double(v)-3)
+        assert(abs(double(v) - 3) < 1e-4);
+        diag = optimize(Cons, v, sdpsettings(options, 'dualize', 1));
         assert(abs(double(v) - 2) < 1e-4);
         abs(double(v)-2)
     end
