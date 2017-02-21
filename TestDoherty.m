@@ -21,7 +21,7 @@ coeffsv = CoeffsFromOperator2(rhov, 3, 3);
 options = sdpsettings('verbose', 1, 'solver', 'sedumi');
 for useSym = 0:1
     for realify = 0:1
-        Cons = SymmetricExtensionCone(coeffsv, 2, useSym, true, realify);
+        Cons = SymmetricExtensionCone(coeffsv, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, options);
         abs(double(v)-3)
         assert(abs(double(v) - 3) < 1e-4);

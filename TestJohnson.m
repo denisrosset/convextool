@@ -16,7 +16,7 @@ vs = [2/3 5/9 1/2]; % visibilities
 for i = 1:3
     for useSym = 0:1
         for realify = 0:1
-            Cons = SymmetricExtensionCone(coeffsv, ks(i), useSym, false, realify);
+            Cons = SymmetricExtensionCone(coeffsv, ks(i), [], useSym, realify);
             optimize(Cons, -v, options);
             assert(abs(double(v) - vs(i)) < 1e-5);
         end

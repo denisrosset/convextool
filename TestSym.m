@@ -6,10 +6,12 @@ rho1 = rho1/trace(rho1);
 v = sdpvar;
 rhov = rho0*(1-v) + rho1*v;
 coeffsv = CoeffsFromOperator2(rhov, 2, 2);
-Cons = SymmetricExtensionCone(coeffsv, 4, false, true);
-optimize(Cons, -v, options);
-vnosym = double(v);
-Cons = SymmetricExtensionCone(coeffsv, 4, true, true);
-optimize(Cons, -v, options);
-vsym = double(v);
-assert(abs(vnosym - vsym) < 1e-5);
+values = [];
+for realify = 0:1
+    for useSym = 0:1
+        Cons = SymmetricExtensionCone(coeffsv, 4, 'doherty', useSym, realify);
+        optimize(Cons, -v, options);
+        values = [values double(v)];
+    end
+end
+assert(max(values) - min(values) < 1e-5);

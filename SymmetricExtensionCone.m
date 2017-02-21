@@ -1,4 +1,4 @@
-function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, usePPT, realify)
+function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, ppt, useSym, realify)
 % SymmetricExtensionCone Compute SDP constraints corresponding to symmetric extension cones
 %
 % INPUTS
@@ -7,12 +7,39 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
 %            H = sum_ij coeffs(i,j) * kron(FA{i}, FB{j})
 %            where FA, FB are given by GeneralizedGellMann
 % k          Number of copies of subsystem B
-% useSym     Whether to use the symmetric subspace
-% usePPT     Whether to use the PPT constraints
-% realify    Whether to use a real SDP formulation
+% ppt        PPT constraints to add. Can be of the following form:
+%            = []            no PPT constraints
+%            = [t_1 ... t_n] with 1 <= t_j <= k (duplicates ignored)
+%                            for each t_j, adds a PPT constraint such that a number t_j of copies
+%                            of B is transposed
+%            = 'doherty'     equivalent to [1 2 ... k], PPT conditions in the original 2004 Doherty paper
+%            = 'navascues'   equivalent to [ceil(k/2)], PPT condition in the 2009 Navascues paper,
+%                                                       also the way it is implemented in QETLAB
+%            Default: [] (do not use PPT constraints)
+% useSym     Whether to use the symmetric subspace (default: 1)
+% realify    Whether to use a real SDP formulation (default: 1)
+%
+% References
+% Navascues 2009, DOI: 10.1103/PhysRevLett.103.160404
+% Doherty 2004, DOI: 10.1103/PhysRevA.69.022308
+    if nargin < 3
+        ppt = [];
+    end
+    if nargin < 4 || isequal(useSym, [])
+        useSym = true;
+    end
     if nargin < 5 || isequal(realify, [])
         realify = true;
     end
+    if isequal(ppt, 'doherty')
+        ppt = 1:k;
+    elseif isequal(ppt, 'navascues')
+        ppt = ceil(k/2);
+    else
+        assert(all(ppt >= 1));
+        assert(all(ppt <= k));
+    end
+    usePPT = ~isequal(ppt, []);
     dA = sqrt(size(coeffs, 1));
     dB = sqrt(size(coeffs, 2));
     [FA DA indPTA] = GeneralizedGellMann(dA);
@@ -137,10 +164,12 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     PPTCons = [];
     if usePPT
         for k1 = 1:k
-            if realify
-                PPTCons = [PPTCons; ComplexToReal(PPT{k1}) >= 0];
-            else
-                PPTCons = [PPTCons; PPT{k1} >= 0];
+            if any(ppt == k1)
+                if realify
+                    PPTCons = [PPTCons; ComplexToReal(PPT{k1}) >= 0];
+                else
+                    PPTCons = [PPTCons; PPT{k1} >= 0];
+                end
             end
         end
     end

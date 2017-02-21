@@ -16,7 +16,7 @@ rhov = state00*(1-v) + psiplus*v;
 coeffsv = CoeffsFromOperator2(rhov, 2, 2);
 for useSym = 0:1
     for realify = 0:1
-        Cons = SymmetricExtensionCone(coeffsv, 2, useSym, false, realify);
+        Cons = SymmetricExtensionCone(coeffsv, 2, [], useSym, realify);
         optimize(Cons, -v, options);
         assert(abs(double(v) - 2/3) < 1e-5);
     end
