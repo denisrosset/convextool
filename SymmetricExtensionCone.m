@@ -1,4 +1,4 @@
-function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, usePPT)
+function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, usePPT, realify)
 % SymmetricExtensionCone Compute SDP constraints corresponding to symmetric extension cones
 %
 % INPUTS
@@ -9,6 +9,10 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
 % k          Number of copies of subsystem B
 % useSym     Whether to use the symmetric subspace
 % usePPT     Whether to use the PPT constraints
+% realify    Whether to use a real SDP formulation
+    if nargin < 5 || isequal(realify, [])
+        realify = true;
+    end
     dA = sqrt(size(coeffs, 1));
     dB = sqrt(size(coeffs, 2));
     [FA DA indPTA] = GeneralizedGellMann(dA);
@@ -17,7 +21,6 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
                           % larger trace by this factor (because the basis is not normalized)
     [~, B01] = BasisSymmetricSubspace(dB, k);
     DupB = B01'*B01;
-    
     
     % indices of the rows/columns to preserve, because the
     % matrix we consider has support and range in the symmetric
@@ -127,12 +130,20 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
             allinall = allinall(dim+1:end);
         end
     end
-    MainCons = [S >= 0];
+    if realify
+        MainCons = [ComplexToReal(S) >= 0];
+    else
+        MainCons = [S >= 0];
+    end
     % PPT constraints
     PPTCons = [];
     if usePPT
         for k1 = 1:k
-            PPTCons = [PPTCons; PPT{k1} >= 0];
+            if realify
+                PPTCons = [PPTCons; ComplexToReal(PPT{k1}) >= 0];
+            else
+                PPTCons = [PPTCons; PPT{k1} >= 0];
+            end
         end
     end
     Cons = [MainCons
