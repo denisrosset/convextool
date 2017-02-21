@@ -25,5 +25,5 @@ function [B B01] = BasisSymmetricSubspace(d, k)
             B01(end + 1, :) = element;
         end
     end
-    B = diag(1./sqrt(sum(B01, 2))) * B01;
+    B = sparse(diag(1./sqrt(sum(B01, 2)))) * B01;
 end

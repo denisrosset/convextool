@@ -6,7 +6,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
 %            of the Hermitian operator to constrain in the symmetric extension cone
 %            H = sum_ij coeffs(i,j) * kron(FA{i}, FB{j})
 %            where FA, FB are given by GeneralizedGellMann
-% k          Number of copies
+% k          Number of copies of subsystem B
 % useSym     Whether to use the symmetric subspace
 % usePPT     Whether to use the PPT constraints
     dA = sqrt(size(coeffs, 1));
