@@ -19,8 +19,6 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     [FB DB indPTB] = GeneralizedGellMann(dB);
     factor = DB(1)^(k-1); % not used (because we define a cone), but the symmetric extension has
                           % larger trace by this factor (because the basis is not normalized)
-    [~, B01] = BasisSymmetricSubspace(dB, k);
-    DupB = B01'*B01;
     
     % indices of the rows/columns to preserve, because the
     % matrix we consider has support and range in the symmetric
