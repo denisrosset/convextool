@@ -24,6 +24,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
 % useSym     Whether to use the symmetric subspace (default: 1)
 % realify    Whether to use a real SDP formulation (default: 1)
     assert(size(rhoAB, 1) == dA * dB);
+    assert(size(rhoAB, 2) == dA * dB);
     if nargin < 5
         ppt = [];
     end
@@ -51,8 +52,6 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
         tau = sdpvar(dA*dBext, dA*dBext, 'hermitian');
         tauFull = kron(eye(dA), G) * tau * kron(eye(dA), G');
         MainCons = [tau >= 0];
-        size(tau)
-        size(tauFull)
     else
         dBext = dB^k;
         [~, nPi, dPi] = ProjectorSymmetricSubspace(dB, k);
