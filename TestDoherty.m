@@ -22,20 +22,19 @@ options = sdpsettings('verbose', 1, 'solver', 'sedumi');
 for useSym = 0:1
     for realify = 0:1
         % dual formulation
+        disp('Dual formulation')
         Cons = SymmetricExtensionConeDual(coeffsv, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, options);
-        abs(double(v)-3)
         assert(abs(double(v) - 3) < 1e-4);
-        diag = optimize(Cons, v, options);
+        optimize(Cons, v, options);
         assert(abs(double(v) - 2) < 1e-4);
-        abs(double(v)-2)
         % primal formulation
+        disp('Primal formulation')
+        [useSym realify]
         Cons = SymmetricExtensionConePrimal(rhov, 3, 3, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
-        abs(double(v)-3)
         assert(abs(double(v) - 3) < 1e-4);
-        diag = optimize(Cons, v, sdpsettings(options, 'dualize', 1));
+        optimize(Cons, v, sdpsettings(options, 'dualize', 1));
         assert(abs(double(v) - 2) < 1e-4);
-        abs(double(v)-2)
     end
 end

@@ -80,10 +80,8 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConeDual(coeffs, k, ppt, us
         dBPPT = ones(1, k) * dB^k;
     end
     % order is A B1 ... Bk
-    S = sparse(dA*dBext*fieldDim, dA*dBext*fieldDim);
-    for j = 1:k
-        PPT{j} = sparse(dA*dBPPT(j)*fieldDim, dA*dBPPT(j)*fieldDim);
-    end
+    % The formulation below has been optimized to reduce preprocessing time
+    % Look at commit e8ed3890 for the more explicit, slower, version
     sdpdim = dA^2*dBext^2;
     if usePPT
         sdpdim = sdpdim + sum(dA^2*dBPPT.^2);

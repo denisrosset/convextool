@@ -1,4 +1,4 @@
-function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k, ppt, useSym, realify)
+function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k, ppt, useSym)
 % SymmetricExtensionConePrimal Compute SDP constraints corresponding to symmetric extension cones
 %
 % Formulation in the YALMIP primal canonical form (= using equalities)
@@ -22,7 +22,6 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
 %                                                       also the way it is implemented in QETLAB
 %            Default: [] (do not use PPT constraints)
 % useSym     Whether to use the symmetric subspace (default: 1)
-% realify    Whether to use a real SDP formulation (default: 1)
     assert(size(rhoAB, 1) == dA * dB);
     assert(size(rhoAB, 2) == dA * dB);
     if nargin < 5
@@ -30,9 +29,6 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
     end
     if nargin < 6 || isequal(useSym, [])
         useSym = true;
-    end
-    if nargin < 7 || isequal(realify, [])
-        realify = true;
     end
     if isequal(ppt, 'doherty')
         ppt = 1:k;
@@ -50,7 +46,8 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
         [~, G] = BasisSymmetricSubspace(dB, k);
         dBext = size(G, 2);
         tau = sdpvar(dA*dBext, dA*dBext, 'hermitian');
-        tauFull = kron(eye(dA), G) * tau * kron(eye(dA), G');
+        conv = kron(eye(dA), G);
+        tauFull = conv * tau * conv';
         MainCons = [tau >= 0];
     else
         dBext = dB^k;
@@ -60,14 +57,25 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
         MainCons = [nPi * tauFull * nPi == dPi * dPi * tauFull % force symmetry
                     tauFull >= 0];
     end
-    tauAB = reshape(tauFull, [dB dB^(k-1) dA dB dB^(k-1) dA]);
+    tauAB = reshape(tauFull, [dB dB^(k-1) dA*fieldDim dB dB^(k-1) dA*fieldDim]);
     tauAB = permute(tauAB, [1 3 4 6 2 5]);
-    tauAB = reshape(tauAB, [dB*dA*dB*dA dB^(k-1)*dB^(k-1)]);
+    tauAB = reshape(tauAB, [dB*dA*fieldDim*dB*dA*fieldDim dB^(k-1)*dB^(k-1)]);
     % partial trace
     tauAB = tauAB * reshape(eye(dB^(k-1)), dB^(k-1)*dB^(k-1), 1);
-    tauAB = reshape(tauAB, [dB*dA dB*dA]);
-    MainCons = [MainCons
-                tauAB == rhoAB];
+    tauAB = reshape(tauAB, [dB*dA*fieldDim dB*dA*fieldDim]);
+    if realify
+        rhoRealPart = real(rhoAB);
+        rhoImagPart = imag(rhoAB);
+        [tauRealPart tauImagPart] = RealifiedParts(tauAB);
+        MainCons = [MainCons
+                    rhoRealPart == tauRealPart
+                    rhoImagPart == tauImagPart];
+        %        MainCons = [MainCons
+        %                    tauAB == ComplexToReal(rhoAB)];
+    else
+        MainCons = [MainCons
+                    tauAB == rhoAB];
+    end
     PPTCons = [];
     if usePPT
         if useSym
@@ -78,11 +86,11 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
                 [~, G2] = BasisSymmetricSubspace(dB, k2);
                 dB1 = size(G1, 2);
                 dB2 = size(G2, 2);
-                conv = kron(G1, G2) \ G; % split the symmetric subspace
-                tauPPT = kron(eye(dA), conv) * tau * kron(eye(dA), conv');
-                tauPPT = reshape(tauPPT, [dB1 dB2 dA dB1 dB2 dA]);
+                conv = kron(kron(eye(dA), kron(G1, G2) \ G), fieldId); % split the symmetric subspace
+                tauPPT = conv * tau * conv';
+                tauPPT = reshape(tauPPT, [dB1 dB2 dA*fieldDim dB1 dB2 dA*fieldDim]);
                 tauPPT = permute(tauPPT, [4 2 3 1 5 6]);
-                tauPPT = reshape(tauPPT, [dB1*dB2*dA dB1*dB2*dA]);
+                tauPPT = reshape(tauPPT, [dB1*dB2*dA*fieldDim dB1*dB2*dA*fieldDim]);
                 PPTCons = [PPTCons
                            tauPPT >= 0];
             end
@@ -90,9 +98,9 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimal(rhoAB, dA, dB, k
             for i = 1:length(ppt)
                 k1 = ppt(i);
                 k2 = k - ppt(i);
-                tauPPT = reshape(tauFull, [dB^k1 dB^k2 dA dB^k1 dB^k2 dA]);
+                tauPPT = reshape(tauFull, [dB^k1 dB^k2 dA*fieldDim dB^k1 dB^k2 dA*fieldDim]);
                 tauPPT = permute(tauPPT, [4 2 3 1 5 6]);
-                tauPPT = reshape(tauPPT, [dB^k*dA dB^k*dA]);
+                tauPPT = reshape(tauPPT, [dB^k*dA*fieldDim dB^k*dA*fieldDim]);
                 PPTCons = [PPTCons
                            tauPPT >= 0];
             end
