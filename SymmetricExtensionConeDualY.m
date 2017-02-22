@@ -1,9 +1,9 @@
-function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, useSym, realify)
+function [Cons Info] = SymmetricExtensionConeDualY(coeffs, def)
 % SymmetricExtensionConeY Compute SDP constraints corresponding to symmetric extension cones
 %
 % Formulation in the YALMIP dual canonical form (= using inequalities); to recover the dual
-% variables associated with constraints, use "realify = 1"; otherwise, YALMIP performs the
-% realification itselfs, and cannot recover them.
+% variables associated with constraints, set 'toReal' = 1; otherwise, YALMIP performs the
+% real transform itself, and cannot recover them.
 %
 % Note that the input density matrix is specified using a real decomposition over an Hermitian
 % basis, avoiding the use of complex numbers when those are undesirable.
@@ -13,47 +13,46 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, u
 %            of the Hermitian operator to constrain in the symmetric extension cone
 %            H = sum_ij coeffs(i,j) * kron(FA{i}, FB{j})
 %            where FA, FB are given by GeneralizedGellMann
-% k          Number of copies of subsystem B
-% ppt        PPT constraints to add. Can be of the following form:
-%            = []            no PPT constraints
-%            = [t_1 ... t_n] with 1 <= t_j <= k (duplicates ignored)
-%                            for each t_j, adds a PPT constraint such that a number t_j of copies
-%                            of B is transposed
-%            = 'doherty'     equivalent to [1 2 ... k], PPT conditions in the original 2004 Doherty paper
-%            = 'navascues'   equivalent to [ceil(k/2)], PPT condition in the 2009 Navascues paper,
-%                                                       also the way it is implemented in QETLAB, as of end 2016
-%            Default: [] (do not use PPT constraints)
-% useSym     Whether to use the symmetric subspace (default: 1)
-% realify    Whether to use a real SDP formulation (default: 1)
 %
-% References
-% Navascues 2009, DOI: 10.1103/PhysRevLett.103.160404
-% Doherty 2004, DOI: 10.1103/PhysRevA.69.022308
-    if nargin < 3
-        ppt = [];
-    end
-    if nargin < 4 || isequal(useSym, [])
-        useSym = true;
-    end
-    if nargin < 5 || isequal(realify, [])
-        realify = true;
-    end
-    if isequal(ppt, 'doherty')
-        ppt = 1:k;
-    elseif isequal(ppt, 'navascues')
-        ppt = ceil(k/2);
+% def          Symmetric cone definition, see SymmetricExtensionDef
+%
+% OUTPUTS
+%
+% Cons         All the SDP constraints associated with the cone
+%
+% Info         Extra information to use in diagnostics
+%
+% Info.tauC    SDP constraint of the symmetric extension tau >= 0
+%
+%              For 'useSym' = 0
+% Info.symC    Symmetric equality constraint
+% Info.tau =   Density matrix of the symmetric extension
+%
+%              For 'useSym' = 1
+% Info.tau     Density matrix of the symmetric extension (reduced sym. basis)
+%
+%              For length(def.ppt) > 1
+% Info.tauPT   Cell array of matrices of partial transposes
+% Info.tauPTC  Cell array of PPT constraints PT{i} >= 0
+%
+%              For k > 1
+% Info.reprC   The constraint that trace_{B2..Bk}(tau) == rhoAB
+    dims = def.dims;
+    k = def.k;
+    ppt = def.ppt;
+    useSym = def.useSym;
+    toReal = def.toReal;
+    if toReal
+        fieldDim = 2; % 1 if complex, 2 if real
     else
-        assert(all(ppt >= 1));
-        assert(all(ppt <= k));
+        fieldDim = 1;
     end
-    usePPT = length(ppt) > 0;
-    dA = sqrt(size(coeffs, 1));
-    dB = sqrt(size(coeffs, 2));
+    dA = dims(1);
+    dB = dims(2);
+    assert(size(coeffs, 1) == dA * dA);
+    assert(size(coeffs, 2) == dB * dB);
     [FA DA indPTA] = GeneralizedGellMann(dA);
     [FB DB indPTB] = GeneralizedGellMann(dB);
-    factor = DB(1)^(k-1); % not used (because we define a cone), but the symmetric extension has
-                          % larger trace by this factor (because the basis is not normalized)
-    
     % indices of the rows/columns to preserve, because the
     % matrix we consider has support and range in the symmetric
     % subspace
@@ -61,7 +60,9 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, u
     % we consider the same for the PPT matrices
     symIndices = [];
     symIndicesPPT = cell(1, k);
-    fieldDim = 2; % 1 if complex, 2 if real
+    tauPT = {};
+    tauPTC = {};
+    usePPT = length(ppt) > 0;
     if useSym
         indicesB = SymmetricCanonicalIndices(dB, k);
         symIndices = indicesB(:)';
@@ -149,8 +150,8 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, u
     %    basis = double(orth(sym(full(basis)), 'skipnormalization'));
     allinall = fixed + basis * sdpvar(size(basis, 2), 1);
     dim = dA^2*dBext^2;
-    S = reshape(allinall(1:dim), dA*dBext, dA*dBext);
-    S = (S + S')/2;
+    tau = reshape(allinall(1:dim), dA*dBext, dA*dBext);
+    tau = (tau + tau')/2; % force Hermitian (is it really needed?)
     allinall = allinall(dim+1:end);
     if usePPT
         for j = 1:k
@@ -160,24 +161,27 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, u
             allinall = allinall(dim+1:end);
         end
     end
-    if realify
-        MainCons = [ComplexToReal(S) >= 0];
-    else
-        MainCons = [S >= 0];
+    if toReal
+        tau = ComplexToReal(tau);
     end
-    % PPT constraints
-    PPTCons = [];
+    tauC = [tau >= 0];
     if usePPT
-        for k1 = 1:k
-            if any(ppt == k1)
-                if realify
-                    PPTCons = [PPTCons; ComplexToReal(PPT{k1}) >= 0];
-                else
-                    PPTCons = [PPTCons; PPT{k1} >= 0];
-                end
+        for i = 1:length(ppt)
+            if toReal
+                tauPT{i} = ComplexToReal(PPT{ppt(i)});
+            else
+                tauPT{i} = PPT{ppt(i)};
             end
+            tauPTC{i} = [tauPT{i} >= 0];
         end
     end
-    Cons = [MainCons
-            PPTCons];
+    Cons = [tauC
+            tauPTC{:}];
+    if nargout > 1
+        Info = struct;
+        Info.tau = tau;
+        Info.tauPT = tauPT;
+        Info.tauC = tauC;
+        Info.tauPTC = tauPTC;
+    end
 end

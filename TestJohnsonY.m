@@ -15,12 +15,14 @@ ks = [2 3 4];       % number of copies
 vs = [2/3 5/9 1/2]; % visibilities
 for i = 1:3
     for useSym = 0:1
-        for realify = 0:1
-            Cons = SymmetricExtensionConeDualY(coeffsv, ks(i), [], useSym, realify);
+        for r = 0:1
+            def = SymmetricExtensionDef([2 2], ks(i), 'useSym', useSym, 'toReal', r);
+            [Cons Info] = SymmetricExtensionConeDualY(coeffsv, def);
             optimize(Cons, -v, options);
             assert(abs(double(v) - vs(i)) < 1e-5);
         end
-        Cons = SymmetricExtensionConePrimalY(rhov, [2 2], ks(i), [], useSym);
+        def = SymmetricExtensionDef([2 2], ks(i), 'useSym', useSym, 'toReal', 0);
+        [Cons Info] = SymmetricExtensionConePrimalY(rhov, def);
         optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
         assert(abs(double(v) - vs(i)) < 1e-5);
     end

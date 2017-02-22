@@ -1,68 +1,48 @@
-function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
+function rhoAB = SymmetricExtensionConeC(def)
 % SymmetricExtensionConeC Approximation of the cone of separable operators
 %
 % Formulation in the CVX standard form (= SeDuMi primal, using equalities)
-% To gain advantage of this formulation, set sdpsettings('dualize', 1)
-% There is no support of "realification". This formulation is quite
-% inefficient for `useSym = 0`.
+% There is no support of "realification". 
 %
 % INPUTS
-% dims       = [dA dB]  Dimension of subsystems A and B
-% k          Number of copies of subsystem B in the extension
-% ppt        PPT constraints to add. Can be of the following form:
-%            = []            no PPT constraints
-%            = [t_1 ... t_n] with 1 <= t_j <= k (duplicates ignored)
-%                            for each t_j, adds a PPT constraint such that a number t_j of copies
-%                            of B is transposed
-%            = 'doherty'     equivalent to [1 2 ... k], PPT conditions in the original 2004 Doherty paper
-%            = 'navascues'   equivalent to [ceil(k/2)], PPT condition in the 2009 Navascues paper,
-%                                                       also the way it is implemented in QETLAB, as of end 2016
-%            Default: [] (do not use PPT constraints)
-% useSym     Whether to use the symmetric subspace (default: 1)
+% def        Symmetric cone definition, see SymmetricExtensionDef
 %
 % OUTPUTS
 % rhoAB      Complex (dA*dB)x(dA*dB) matrix representing the AB system
 %            The A,B basis ordering is such that a product state
 %            rhoAB = rhoA (x) rhoB = kron(rhoA, rhoB)
-
-    % process parameters
-    assert(length(dims) == 2);
+    
+    if ~def.useSym
+        warning('The nonsymmetric primal form is inefficient. Set ''useSym'', 1')
+    end
+    if def.toReal
+        warning('Real formulation is not supported in primals. Use SymmetricExtensionConeDualY.');
+    end
+    dims = def.dims;
+    k = def.k;
+    ppt = def.ppt;
+    usePPT = length(ppt) > 0;
+    useSym = def.useSym;
     dA = dims(1);
     dB = dims(2);
-    if nargin < 3
-        ppt = [];
-    end
-    if nargin < 4 || isequal(useSym, [])
-        useSym = true;
-    end
-    if isequal(ppt, 'doherty')
-        ppt = 1:k;
-    elseif isequal(ppt, 'navascues')
-        ppt = ceil(k/2);
-    else
-        assert(all(ppt >= 1));
-        assert(all(ppt <= k));
-    end
-    usePPT = length(ppt) > 0;
-    if usePPT
-        ppt = unique(ppt);
-    end
-
-    if k == 1 % handle separately the PPT criterion
+    
+    if k == 1 % handle separately the PPT criterion alone, without extension
         d = dA*dB;
         if isequal(ppt, [])
             warning('The symmetric 1-extension without PPT constraint is trivial');
             cvx_begin set sdp
             variable rhoAB(d, d) semidefinite hermitian % main variable
+            rhoAB >= 0
             cvx_end
         else
             cvx_begin set sdp
             variable rhoAB(d, d) semidefinite hermitian % main variable
-            variable pptAB(d, d) hermitian % partial transpose
+            variable pptAB(d, d) semidefinite hermitian % partial transpose
             rhoTA = reshape(rhoAB, [dB dA dB dA]);
             rhoTA = permute(rhoTA, [3 2 1 4]);
             rhoTA = reshape(rhoTA, [d d]);
             rhoTA == pptAB
+            rhoAB >= 0
             pptAB >= 0
             cvx_end
         end

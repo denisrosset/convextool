@@ -15,12 +15,14 @@ v = sdpvar;
 rhov = state00*(1-v) + psiplus*v;
 coeffsv = CoeffsFromOperator2(rhov, 2, 2);
 for useSym = 0:1
-    for realify = 0:1
-        Cons = SymmetricExtensionConeDualY(coeffsv, 2, [], useSym, realify);
+    for toReal = 0:1
+        def = SymmetricExtensionDef([2 2], 2, 'ppt', [], 'useSym', useSym, 'toReal', toReal);
+        Cons = SymmetricExtensionConeDualY(coeffsv, def);
         optimize(Cons, -v, options);
         assert(abs(double(v) - 2/3) < 1e-5);
     end
-    Cons = SymmetricExtensionConePrimalY(rhov, [2 2], 2, [], useSym);
+    def = SymmetricExtensionDef([2 2], 2, 'ppt', [], 'useSym', useSym, 'toReal', 0);
+    Cons = SymmetricExtensionConePrimalY(rhov, def);
     optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
     assert(abs(double(v) - 2/3) < 1e-5);
 end

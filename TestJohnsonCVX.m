@@ -12,11 +12,12 @@ vs = [2/3 5/9 1/2]; % visibilities
 cvx_solver sdpt3
 for i = 1:3
     for useSym = 0:1
+        def = SymmetricExtensionDef([2 2], ks(i), 'useSym', useSym, 'toReal', 0);
         cvx_begin sdp quiet
         variable v;
         maximize(v)
         subject to
-        rho0*(1-v) + singlet*v == SymmetricExtensionConeC([2 2], ks(i), [], useSym)
+        rho0*(1-v) + singlet*v == SymmetricExtensionConeC(def)
         cvx_end
         assert(abs(v - vs(i)) < 1e-5);
     end

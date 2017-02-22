@@ -11,13 +11,14 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 0 0 0]/2;
 v = sdpvar;
-for useSym = 1
+for useSym = 0:1
+    def = SymmetricExtensionDef([2 2], 2, 'ppt', [], 'useSym', useSym, 'toReal', 0);
     cvx_solver sdpt3
-    cvx_begin sdp %quiet
+    cvx_begin sdp quiet
     variable v
     maximize(v)
     subject to
-    state00*(1-v) + psiplus*v == SymmetricExtensionConeC([2 2], 2, [], useSym);
+    state00*(1-v) + psiplus*v == SymmetricExtensionConeC(def);
     cvx_end
     assert(abs(v - 2/3) < 1e-5);
 end

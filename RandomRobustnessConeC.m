@@ -1,14 +1,17 @@
-function set = RandomRobustnessConeC(dims, k, ppt, useSym)
-% RandomRobustnessConeC Random robustness entanglement measure cone
+function set = RandomRobustnessConeC(def)
+% RandomRobustnessConeC Lower bound on the random robustness entanglement measure cone
 %
 % {nu rho} = RandomRobustnessConeC([dA dB]) returns the cone such that
 %
-% - rho is a bipartite density matrix, ordered such that th
+% - rho is a bipartite density matrix, ordered such that the
 %   product state rhoAB = rhoA (x) rhoB = kron(rhoA, rhoB)
 % - nu is a nonnegative variable such that nu >= randomrobustness(rho)
 %   where randomrobustness(rho) is given by the Definition after Eq. (6)
 %   of http://link.aps.org/doi/10.1103/PhysRevA.59.141
-    assert(length(dims) == 2);
+%
+% The random robustness is computed with respect to an approximation of the
+% separable cone given in the parameter 'def', obtained by SymmetricExtensionDef.
+    dims = def.dims;
     dA = dims(1);
     dB = dims(2);
     d = dA*dB;
@@ -16,7 +19,7 @@ function set = RandomRobustnessConeC(dims, k, ppt, useSym)
     cvx_begin set sdp
     variable rho(d, d) hermitian
     variable nu nonnegative
-    rho + nu * rhoI == SymmetricExtensionConeC(dims, k, ppt, useSym)
+    rho + nu * rhoI == SymmetricExtensionConeC(def)
     cvx_end
     set = cvxtuple(struct('nu', nu, 'rho', rho));
 end
