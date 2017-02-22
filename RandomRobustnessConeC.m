@@ -13,7 +13,6 @@ function set = RandomRobustnessConeC(def)
 % separable cone given in the parameter 'def', obtained by SymmetricExtensionDef.
 %
 % For dA*dB <= 6, the approximation is exact if def.ppt = 'doherty' or [1].
-
     dims = def.dims;
     dA = dims(1);
     dB = dims(2);
