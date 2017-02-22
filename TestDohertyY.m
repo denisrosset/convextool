@@ -23,18 +23,17 @@ for useSym = 0:1
     for realify = 0:1
         % dual formulation
         disp('Dual formulation')
-        Cons = SymmetricExtensionConeDual(coeffsv, 2, 'doherty', useSym, realify);
+        Cons = SymmetricExtensionConeDualY(coeffsv, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, options);
         assert(abs(double(v) - 3) < 1e-4);
         optimize(Cons, v, options);
         assert(abs(double(v) - 2) < 1e-4);
-        % primal formulation
-        disp('Primal formulation')
-        [useSym realify]
-        Cons = SymmetricExtensionConePrimal(rhov, 3, 3, 2, 'doherty', useSym, realify);
-        optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
-        assert(abs(double(v) - 3) < 1e-4);
-        optimize(Cons, v, sdpsettings(options, 'dualize', 1));
-        assert(abs(double(v) - 2) < 1e-4);
     end
+    % primal formulation
+    disp('Primal formulation')
+    Cons = SymmetricExtensionConePrimalY(rhov, [3 3], 2, 'doherty', useSym);
+    optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
+    assert(abs(double(v) - 3) < 1e-4);
+    optimize(Cons, v, sdpsettings(options, 'dualize', 1));
+    assert(abs(double(v) - 2) < 1e-4);
 end

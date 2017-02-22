@@ -16,14 +16,14 @@ vs = [2/3 5/9 1/2]; % visibilities
 for i = 1:3
     for useSym = 0:1
         for realify = 0:1
-            Cons = SymmetricExtensionConeDual(coeffsv, ks(i), [], useSym, realify);
+            Cons = SymmetricExtensionConeDualY(coeffsv, ks(i), [], useSym, realify);
             optimize(Cons, -v, options);
             [double(v)  vs(i)]
             assert(abs(double(v) - vs(i)) < 1e-5);
-            Cons = SymmetricExtensionConePrimal(rhov, 2, 2, ks(i), [], useSym, realify);
-            optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
-            [double(v)  vs(i)]
-            assert(abs(double(v) - vs(i)) < 1e-5);
         end
+        Cons = SymmetricExtensionConePrimalY(rhov, [2 2], ks(i), [], useSym);
+        optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
+        [double(v)  vs(i)]
+        assert(abs(double(v) - vs(i)) < 1e-5);
     end
 end

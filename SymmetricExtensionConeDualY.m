@@ -1,7 +1,12 @@
-function [Cons MainCons PPTCons] = SymmetricExtensionConeDual(coeffs, k, ppt, useSym, realify)
-% SymmetricExtensionCone Compute SDP constraints corresponding to symmetric extension cones
+function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, useSym, realify)
+% SymmetricExtensionConeY Compute SDP constraints corresponding to symmetric extension cones
 %
-% Formulation in the YALMIP dual canonical form (= using inequalities)
+% Formulation in the YALMIP dual canonical form (= using inequalities); to recover the dual
+% variables associated with constraints, use "realify = 1"; otherwise, YALMIP performs the
+% realification itselfs, and cannot recover them.
+%
+% Note that the input density matrix is specified using a real decomposition over an Hermitian
+% basis, avoiding the use of complex numbers when those are undesirable.
 %
 % INPUTS
 % coeffs     (dA^2)x(dB^2) matrix of type double/sdpvar containing the coefficients
