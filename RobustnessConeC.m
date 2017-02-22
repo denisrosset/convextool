@@ -1,5 +1,5 @@
 function set = RobustnessConeC(def)
-% RobustnessConeC Lower bound on the random robustness entanglement measure cone
+% RobustnessConeC Outer approximation of the random robustness entanglement measure cone
 %
 % {nu rho} = RobustnessConeC([dA dB]) returns the cone such that
 %
@@ -10,6 +10,8 @@ function set = RobustnessConeC(def)
 %
 % The robustness is computed with respect to an approximation of
 % the separable cone given in the parameter 'def', obtained by SymmetricExtensionDef.
+%
+% For dA*dB <= 6, the approximation is exact if def.ppt = 'doherty' or [1].
     dims = def.dims;
     dA = dims(1);
     dB = dims(2);
