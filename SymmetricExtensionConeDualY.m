@@ -21,7 +21,7 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConeDualY(coeffs, k, ppt, u
 %                            of B is transposed
 %            = 'doherty'     equivalent to [1 2 ... k], PPT conditions in the original 2004 Doherty paper
 %            = 'navascues'   equivalent to [ceil(k/2)], PPT condition in the 2009 Navascues paper,
-%                                                       also the way it is implemented in QETLAB
+%                                                       also the way it is implemented in QETLAB, as of end 2016
 %            Default: [] (do not use PPT constraints)
 % useSym     Whether to use the symmetric subspace (default: 1)
 % realify    Whether to use a real SDP formulation (default: 1)
