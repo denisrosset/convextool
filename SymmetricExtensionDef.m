@@ -1,0 +1,2 @@
+function def = SymmetricExtensionDef()
+end

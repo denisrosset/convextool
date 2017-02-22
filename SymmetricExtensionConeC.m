@@ -48,6 +48,27 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
         ppt = unique(ppt);
     end
 
+    if k == 1 % handle separately the PPT criterion
+        d = dA*dB;
+        if isequal(ppt, [])
+            warning('The symmetric 1-extension without PPT constraint is trivial');
+            cvx_begin set sdp
+            variable rhoAB(d, d) semidefinite hermitian % main variable
+            cvx_end
+        else
+            cvx_begin set sdp
+            variable rhoAB(d, d) semidefinite hermitian % main variable
+            variable pptAB(d, d) hermitian % partial transpose
+            rhoTA = reshape(rhoAB, [dB dA dB dA]);
+            rhoTA = permute(rhoTA, [3 2 1 4]);
+            rhoTA = reshape(rhoTA, [d d]);
+            rhoTA == pptAB
+            pptAB >= 0
+            cvx_end
+        end
+        return
+    end
+
     % start the convex cone definition
     cvx_begin set sdp
     variable rhoAB(dA*dB, dA*dB) hermitian % main variable
@@ -56,16 +77,16 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
         [~, G] = BasisSymmetricSubspace(dB, k);
         dBext = size(G, 2);
         variable tau(dA*dBext, dA*dBext) hermitian % variable
+        tau >= 0;
         conv = kron(eye(dA), G);
         tauFull = conv * tau * conv';
-        tau >= 0; % semidefinite positive
     else
         dBext = dB^k;
         [~, nPi, dPi] = ProjectorSymmetricSubspace(dB, k);
         nPi = kron(eye(dA), nPi);
-        variable tauFull(dA*dBext, dA*dBext) hermitian % variable       
+        variable tauFull(dA*dBext, dA*dBext) hermitian % variable
+        tauFull >= 0;
         nPi * tauFull * nPi == dPi * dPi * tauFull; % symmetry
-        tauFull >= 0; % semidefinite positive
     end
     tauAB = reshape(tauFull, [dB dB^(k-1) dA dB dB^(k-1) dA]);
     tauAB = permute(tauAB, [1 3 4 6 2 5]);
@@ -91,7 +112,7 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
                 variable(['tauPPTvar' num2str(i) '(dB1*dB2*dA, dB1*dB2*dA)'], 'hermitian');
                 tauPPTvar = eval(['tauPPTvar' num2str(i)]);
                 tauPPTvar == tauPPT; % PPT constraint
-                tauPPTvar >= 0;
+                tauPPTvar >= 0
             end
         else
             for i = 1:length(ppt)
@@ -103,7 +124,7 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
                 variable(['tauPPTvar' num2str(i) '(dB^k*dA, dB^k*dA)'], 'hermitian');
                 tauPPTvar = eval(['tauPPTvar' num2str(i)]);
                 tauPPTvar == tauPPT; % PPT constraint
-                tauPPTvar >= 0;
+                tauPPTvar >= 0
             end
         end
     end

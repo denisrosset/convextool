@@ -13,7 +13,7 @@ psiplus = [0 0 0 0
 v = sdpvar;
 for useSym = 1
     cvx_solver sdpt3
-    cvx_begin sdp quiet
+    cvx_begin sdp %quiet
     variable v
     maximize(v)
     subject to
