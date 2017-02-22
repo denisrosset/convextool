@@ -29,10 +29,10 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
     assert(length(dims) == 2);
     dA = dims(1);
     dB = dims(2);
-    if nargin < 5
+    if nargin < 3
         ppt = [];
     end
-    if nargin < 6 || isequal(useSym, [])
+    if nargin < 4 || isequal(useSym, [])
         useSym = true;
     end
     if isequal(ppt, 'doherty')
@@ -63,8 +63,7 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
         dBext = dB^k;
         [~, nPi, dPi] = ProjectorSymmetricSubspace(dB, k);
         nPi = kron(eye(dA), nPi);
-        variable tauFull(dA*dBext, dA*dBext) hermitian % variable
-        
+        variable tauFull(dA*dBext, dA*dBext) hermitian % variable       
         nPi * tauFull * nPi == dPi * dPi * tauFull; % symmetry
         tauFull >= 0; % semidefinite positive
     end
@@ -84,12 +83,13 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
                 [~, G2] = BasisSymmetricSubspace(dB, k2);
                 dB1 = size(G1, 2);
                 dB2 = size(G2, 2);
-                conv = kron(kron(eye(dA), kron(G1, G2) \ G), fieldId); % split the symmetric subspace
+                conv = kron(eye(dA), kron(G1, G2) \ G); % split the symmetric subspace
                 tauPPT = conv * tau * conv';
                 tauPPT = reshape(tauPPT, [dB1 dB2 dA dB1 dB2 dA]);
                 tauPPT = permute(tauPPT, [4 2 3 1 5 6]);
                 tauPPT = reshape(tauPPT, [dB1*dB2*dA dB1*dB2*dA]);
-                variable tauPPTvar(dB1*dB2*dA, dB1*dB2*dA) hermitian;
+                variable(['tauPPTvar' num2str(i) '(dB1*dB2*dA, dB1*dB2*dA)'], 'hermitian');
+                tauPPTvar = eval(['tauPPTvar' num2str(i)]);
                 tauPPTvar == tauPPT; % PPT constraint
                 tauPPTvar >= 0;
             end
@@ -100,7 +100,8 @@ function rhoAB = SymmetricExtensionConeC(dims, k, ppt, useSym)
                 tauPPT = reshape(tauFull, [dB^k1 dB^k2 dA dB^k1 dB^k2 dA]);
                 tauPPT = permute(tauPPT, [4 2 3 1 5 6]);
                 tauPPT = reshape(tauPPT, [dB^k*dA dB^k*dA]);
-                variable tauPPTvar(dB^k*dA, dB^k*dA) hermitian;
+                variable(['tauPPTvar' num2str(i) '(dB^k*dA, dB^k*dA)'], 'hermitian');
+                tauPPTvar = eval(['tauPPTvar' num2str(i)]);
                 tauPPTvar == tauPPT; % PPT constraint
                 tauPPTvar >= 0;
             end

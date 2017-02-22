@@ -16,8 +16,8 @@ C2 = C2';
 C3 = C3';
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 for useSym = 0:1
-    cvx_solver sedumi
-    cvx_begin sdp
+    cvx_solver sdpt3
+    cvx_begin sdp quiet
     variable v
     maximize(v)
     subject to
@@ -25,7 +25,7 @@ for useSym = 0:1
     cvx_end
     assert(abs(v - 3) < 1e-4);
     
-    cvx_begin sdp
+    cvx_begin sdp quiet
     variable v
     minimize(v)
     subject to

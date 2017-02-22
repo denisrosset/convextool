@@ -27,10 +27,10 @@ function [Cons MainCons PPTCons] = SymmetricExtensionConePrimalY(rhoAB, dims, k,
     dB = dims(2);
     assert(size(rhoAB, 1) == dA * dB);
     assert(size(rhoAB, 2) == dA * dB);
-    if nargin < 5
+    if nargin < 4
         ppt = [];
     end
-    if nargin < 6 || isequal(useSym, [])
+    if nargin < 5 || isequal(useSym, [])
         useSym = true;
     end
     if isequal(ppt, 'doherty')

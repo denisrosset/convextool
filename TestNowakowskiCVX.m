@@ -12,8 +12,8 @@ psiplus = [0 0 0 0
            0 0 0 0]/2;
 v = sdpvar;
 for useSym = 1
-    cvx_solver sedumi
-    cvx_begin sdp
+    cvx_solver sdpt3
+    cvx_begin sdp quiet
     variable v
     maximize(v)
     subject to

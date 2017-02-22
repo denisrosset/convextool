@@ -2,7 +2,7 @@
 % http://journals.aps.org/pra/pdf/10.1103/PhysRevA.88.032323
 % Compatible quantum correlations: Extension problems for Werner and isotropic states
 % Peter D. Johnson and Lorenza Viola
-options = sdpsettings('verbose', 1);
+options = sdpsettings('verbose', 0, 'solver', 'sedumi');
 singlet = [0 0 0 0
            0 1 -1 0
            0 -1 1 0
@@ -18,12 +18,10 @@ for i = 1:3
         for realify = 0:1
             Cons = SymmetricExtensionConeDualY(coeffsv, ks(i), [], useSym, realify);
             optimize(Cons, -v, options);
-            [double(v)  vs(i)]
             assert(abs(double(v) - vs(i)) < 1e-5);
         end
         Cons = SymmetricExtensionConePrimalY(rhov, [2 2], ks(i), [], useSym);
         optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
-        [double(v)  vs(i)]
         assert(abs(double(v) - vs(i)) < 1e-5);
     end
 end

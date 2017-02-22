@@ -18,11 +18,10 @@ v = sdpvar;
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 rhov = 2*psiplus/7 + v * sigmaplus/7 + (5-v)*VsigmaplusV/7;
 coeffsv = CoeffsFromOperator2(rhov, 3, 3);
-options = sdpsettings('verbose', 1, 'solver', 'sedumi');
+options = sdpsettings('verbose', 0, 'solver', 'sdpt3');
 for useSym = 0:1
     for realify = 0:1
         % dual formulation
-        disp('Dual formulation')
         Cons = SymmetricExtensionConeDualY(coeffsv, 2, 'doherty', useSym, realify);
         optimize(Cons, -v, options);
         assert(abs(double(v) - 3) < 1e-4);
@@ -30,7 +29,6 @@ for useSym = 0:1
         assert(abs(double(v) - 2) < 1e-4);
     end
     % primal formulation
-    disp('Primal formulation')
     Cons = SymmetricExtensionConePrimalY(rhov, [3 3], 2, 'doherty', useSym);
     optimize(Cons, -v, sdpsettings(options, 'dualize', 1));
     assert(abs(double(v) - 3) < 1e-4);
