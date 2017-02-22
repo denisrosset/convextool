@@ -7,7 +7,11 @@ function set = NegativityConeC(dims)
 %   product state rhoAB = rhoA (x) rhoB = kron(rhoA, rhoB)
 % - nu is a nonnegative variable such that nu >= negativity(rho)
 %
-% For rho not normalized, we interpret nu >= trace(rho)*negativity(rho/trace(rho))
+% For rho not normalized, the cone formulation is equivalent to
+% nu >= trace(rho)*negativity(rho/trace(rho))
+%
+% The negativity was studied in http://link.aps.org/doi/10.1103/PhysRevA.59.141
+% and its SDP formulation introduced in http://link.aps.org/doi/10.1103/PhysRevLett.111.030501
     assert(length(dims) == 2);
     dA = dims(1);
     dB = dims(2);
