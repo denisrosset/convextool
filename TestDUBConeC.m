@@ -1,5 +1,5 @@
 % Example of proposition 5 of http://link.aps.org/doi/10.1103/PhysRevA.94.050301
-EW = log(nu);
+% Here, we have EW = log2(nu);
 % Bob in rows, Alice in columns
 for a = [1/3 1/2 2/3]
     a = 1/2;
