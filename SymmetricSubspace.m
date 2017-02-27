@@ -1,15 +1,22 @@
 classdef SymmetricSubspace
-    properties
+    properties(SetAccess = immutable)
         d;
         n;
         dim;
         cumProdFull;
+        dimTable;
     end
     methods
         function obj = SymmetricSubspace(d, n)
             obj.d = d;
             obj.n = n;
-            obj.dim = SymmetricSubspace.computeDimension(d, n);
+            obj.dimTable = zeros(d, n);
+            for i = 1:d
+                for j = 1:n
+                    obj.dimTable(i, j) = SymmetricSubspace.computeDimension(i, j);
+                end
+            end
+            obj.dim = obj.dimTable(d, n);
             p = cumprod(d*ones(1, n));
             obj.cumProdFull = [1 p(1:end-1)];
         end
