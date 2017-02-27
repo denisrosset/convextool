@@ -65,7 +65,12 @@ function rho = SymmetricExtensionConeC(def)
     end
     rho >= 0
     tauSym >= 0
-    [Arho AtauSym] = def.ConstraintRepresentsSym;
-    Arho * rho(:) == AtauSym * tauSym(:)
+    [AtauSym Arho ArhoAIdB] = def.ConstraintRepresentsSym;
+    if isequal(def.approx, 'inner')
+        epsN = def.innerFactor;
+        (dB*(1-epsN) * Arho + epsN * ArhoAIdB) * rho(:) == dB * AtauSym * tauSym(:)
+    else
+        Arho * rho(:) == AtauSym * tauSym(:)
+    end
     cvx_end
 end

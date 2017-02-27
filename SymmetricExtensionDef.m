@@ -157,16 +157,19 @@ classdef SymmetricExtensionDef
                 Jn = floor(def.k/2) + 1;
                 Ja = def.dB - 2;
                 Jb = mod(def.k, 2);
-                epsN = (1 - max(j_polynomial_zeros(Jn, Ja, Jb)))*def.dB/(2*(def.dB-1));
+                epsN = (1 - max(JacobiPolynomial(Jn, Ja, Jb).zeros))*def.dB/(2*(def.dB-1));
             end            
         end
         
-        function [Arho AtauSym] = ConstraintRepresentsSym(def)
+        function [AtauSym Arho ArhoAIdB] = ConstraintRepresentsSym(def)
         % equality constraints that express that
         % tauFull(dB^k*dA, dB^k*dA) == rho(dB*dA, dB*dA)
         % with tau represented in the symmetric subspace as tauSym
         %
         % the constraint is Arho * rho(:) == AtauSym * tauSym(:)
+        %
+        % ArhoAIdB is such that ArhoAIdB * rho(:) is the same as
+        % Arho * (rho_A (x) Id_B)
             dA = def.dA;
             dB = def.dB;
             d = dA*dB;
@@ -187,8 +190,9 @@ classdef SymmetricExtensionDef
             traceOver = (1:nRest)';
             nEqs = (d+1)*d/2; % upper triangle dimension
             Arho = sparse(nEqs, d^2);
+            ArhoAIdB = sparse(nEqs, d^2);
             AtauSymT = sparse(dBsym*dA*dBsym*dA, nEqs); % stores the transpose, MATLAB uses
-                                                         % compressed column storage
+                                                        % compressed column storage
             i = 1;
             for r = 1:d
                 rBA = B_A.indToSub(r);
@@ -204,6 +208,10 @@ classdef SymmetricExtensionDef
                     cBsym = tauS.subToIndSym(cBfull);
                     
                     Arho(i, AB_AB.subToInd([r c])) = 1;
+                    if rB == cB
+                        indices = B_A_B_A.subToInd([(1:dB)' rA*ones(dB,1) (1:dB)' cA*ones(dB,1)]); 
+                        ArhoAIdB(i, indices) = 1;
+                    end
                     tauInd = Bsym_A_Bsym_A.subToInd([rBsym rA*ones(nRest, 1) cBsym cA*ones(nRest, 1)]);
                     tauOnes = ones(size(tauInd));
                     col = sparse(tauInd, tauOnes, tauOnes, dBsym*dA*dBsym*dA, 1);
@@ -214,7 +222,7 @@ classdef SymmetricExtensionDef
             AtauSym = AtauSymT.';
         end
         
-        function [Arho Appt] = ConstraintPPT(def)           
+        function [Appt Arho] = ConstraintPPT(def)           
         % equality constraints that express that
         % rho(dB*dA, dB*dA)^TB == ppt(dB*dA, dB*dA)
             dA = def.dA;
