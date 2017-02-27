@@ -30,38 +30,11 @@ classdef SymmetricSubspace
         %        sub(r, :) = [c1 c2 ... cn] with 1 <= c1 <= <= c2 <= ... <= cn <= d
             ind = ind(:);
             nRows = length(ind);
-            if obj.n == 1
-                sub = ind;
-            else
-                [sortedInd, index] = sort(ind);
-                rStart = 1;
-                nElementsBefore = 0;
-                sortedSub = zeros(nRows, obj.n);
-                for firstCol = 1:obj.d
-                    % when the first column index is i, the elements of the remaining
-                    % columns can be chosen from i to d, thus there are (d - i + 1)
-                    % choices for these (n - 1) columns
-                    sizeOfBlock = SymmetricSubspace.computeDimension(obj.d - firstCol + 1, obj.n - 1);
-                    startIndex = nElementsBefore + 1;
-                    endIndex = startIndex + sizeOfBlock - 1;
-                    if rStart <= nRows && sortedInd(rStart) <= endIndex
-                        % we have a block
-                        rNextStart = rStart + 1;
-                        while rNextStart <= nRows && sortedInd(rNextStart) <= endIndex
-                            rNextStart = rNextStart + 1;
-                        end
-                        rEnd = rNextStart - 1;
-                        remainingColsInd = sortedInd(rStart:rEnd) - nElementsBefore;
-                        remainingColsSub = SymmetricSubspace(obj.d - firstCol + 1, obj.n - 1).indToSubSym(remainingColsInd);
-                        sortedSub(rStart:rEnd, 1) = firstCol;
-                        sortedSub(rStart:rEnd, 2:end) = remainingColsSub + firstCol - 1;
-                        rStart = rNextStart;
-                    end
-                    nElementsBefore = nElementsBefore + sizeOfBlock;
-                end
-                sub = zeros(nRows, obj.n);
-                sub(index, :) = sortedSub;
-            end
+            [sortedInd, index] = sort(ind);
+            nRows = length(ind);
+            sortedSub = SymmetricSubspace.indToSubSymHelper(sortedInd, obj.d, obj.n, obj.dimTable);
+            sub = zeros(nRows, obj.n);
+            sub(index, :) = sortedSub;
         end
         function ind = subToIndSym(obj, sub)
         % subToIndSym Converts from subindices to the index in the symmetric basis
@@ -82,29 +55,9 @@ classdef SymmetricSubspace
                                                     % we have sortedSub = sub(index, :)
                 rStart = 1;
                 nRows = size(sortedSub, 1);
-                sortedInd = zeros(nRows, 1);
-                while rStart <= nRows
-                    rNextStart = rStart + 1;
-                    firstCol = sortedSub(rStart, 1);
-                    while rNextStart <= nRows && sortedSub(rNextStart, 1) == firstCol
-                        rNextStart = rNextStart + 1;
-                    end
-                    rEnd = rNextStart - 1;
-                    nElementsBefore = 0;
-                    for firstColBefore = 1:(firstCol-1)
-                        % when the first column index is i, the elements of the remaining
-                        % columns can be chosen from i to d, thus there are (d - i + 1)
-                        % choices for these (n - 1) columns
-                        sizeOfBlock = SymmetricSubspace.computeDimension(obj.d - firstColBefore + 1, obj.n - 1);
-                        nElementsBefore = nElementsBefore + sizeOfBlock;
-                    end
-                    remainingCols = sortedSub(rStart:rEnd, 2:end) - firstCol + 1;
-                    remainingColsInd = SymmetricSubspace(obj.d - firstCol + 1, obj.n - 1).subToIndSym(remainingCols);
-                    sortedInd(rStart:rEnd) = nElementsBefore + remainingColsInd - 1;
-                    rStart = rNextStart;
-                end
+                sortedInd = SymmetricSubspace.subToIndSymHelper(sortedSub, obj.d, obj.n, obj.dimTable);
                 ind = zeros(nRows, 1);
-                ind(index) = sortedInd + 1;
+                ind(index) = sortedInd;
             end
         end
         function sub = indToSubFull(obj, ind)
@@ -120,6 +73,82 @@ classdef SymmetricSubspace
         function ind = subToIndFull(obj, sub);
             assert(size(sub, 2) == obj.n);
             ind = (obj.cumProdFull * (sub' - 1) + 1)';
+        end
+    end
+    methods(Static)        
+        function sub = indToSubSymHelper(ind, d, n, dimTable)
+        % helper function for indToSubSym
+        % assumes that ind is already sorted
+            if n == 1 % handle the trivial case
+                sub = ind;
+                return
+            end
+            nRows = length(ind);
+            rStart = 1;
+            nElementsBefore = 0;
+            sub = zeros(nRows, n);
+            % for speed, we select the block of indices whose first subindex value
+            % is the same; then we call indToSubSymHelper recursively for the remaining
+            % columns of the block
+            for firstCol = 1:d
+                % when the first column index is i, the elements of the remaining
+                % columns can be chosen from i to d, thus there are (d - i + 1)
+                % choices for these (n - 1) columns
+                sizeOfBlock = SymmetricSubspace.computeDimension(d - firstCol + 1, n - 1);
+                startIndex = nElementsBefore + 1;
+                endIndex = startIndex + sizeOfBlock - 1;
+                if rStart <= nRows && ind(rStart) <= endIndex
+                    % we have a block
+                    rNextStart = rStart + 1;
+                    while rNextStart <= nRows && ind(rNextStart) <= endIndex
+                        rNextStart = rNextStart + 1;
+                    end
+                    rEnd = rNextStart - 1;
+                    remainingColsInd = ind(rStart:rEnd) - nElementsBefore;
+                    remainingColsSub = SymmetricSubspace.indToSubSymHelper(remainingColsInd, d - firstCol + 1, n - 1, dimTable);
+                    sub(rStart:rEnd, 1) = firstCol;
+                    sub(rStart:rEnd, 2:end) = remainingColsSub + firstCol - 1;
+                    rStart = rNextStart;
+                end
+                nElementsBefore = nElementsBefore + sizeOfBlock;
+            end            
+        end
+        function ind = subToIndSymHelper(sub, d, n, dimTable)
+        % helper function for subToIndSym
+        % assumes that sub is already sorted, i.e.
+        % each subindex is in the canonical form (increasing)
+        % and the rows are sorted lexicographically
+            if n == 1
+                ind = sub;
+                return
+            end
+            rStart = 1;
+            nRows = size(sub, 1);
+            ind = zeros(nRows, 1);
+            % for speed, we treat all rows with the same "first column value" as a group
+            % then, the subspace spanned by the remaining column is also a symmetric subspace
+            % whose dimension is reduced by the index of the first column value (canonical indices
+            % are increasing), and number of copies is n - 1.
+            while rStart <= nRows
+                rNextStart = rStart + 1;
+                firstCol = sub(rStart, 1);
+                while rNextStart <= nRows && sub(rNextStart, 1) == firstCol
+                    rNextStart = rNextStart + 1;
+                end
+                rEnd = rNextStart - 1;
+                nElementsBefore = 0;
+                for firstColBefore = 1:(firstCol-1)
+                    % when the first column index is i, the elements of the remaining
+                    % columns can be chosen from i to d, thus there are (d - i + 1)
+                    % choices for these (n - 1) columns
+                    sizeOfBlock = dimTable(d - firstColBefore + 1, n - 1);
+                    nElementsBefore = nElementsBefore + sizeOfBlock;
+                end
+                remainingCols = sub(rStart:rEnd, 2:end) - firstCol + 1;
+                remainingColsInd = SymmetricSubspace.subToIndSymHelper(remainingCols, d - firstCol + 1, n - 1, dimTable);
+                ind(rStart:rEnd) = nElementsBefore + remainingColsInd;
+                rStart = rNextStart;
+            end
         end
     end
     methods(Static)
