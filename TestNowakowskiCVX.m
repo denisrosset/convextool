@@ -10,12 +10,11 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 1 1 0
            0 0 0 0]/2;
-v = sdpvar;
 for useSym = 1
     def = SymmetricExtensionDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym, 'toReal', 0);
     cvx_solver sdpt3
     cvx_begin sdp
-    %    cvx_dualize off
+    %cvx_dualize off
     variable v nonnegative
     maximize(v)
     subject to

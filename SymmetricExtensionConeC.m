@@ -1,4 +1,4 @@
-function rhoAB = SymmetricExtensionConeC(def)
+function rho = SymmetricExtensionConeC(def)
 % SymmetricExtensionConeC Approximation of the cone of separable operators
 %
 % Formulation in the CVX standard form (= SeDuMi primal, using equalities)
@@ -8,23 +8,20 @@ function rhoAB = SymmetricExtensionConeC(def)
 % def        Symmetric cone definition, see SymmetricExtensionDef
 %
 % OUTPUTS
-% rhoAB      Complex (dA*dB)x(dA*dB) matrix representing the AB system
+% rho        Complex (dA*dB)x(dA*dB) matrix representing the AB system
 %            The A,B basis ordering is such that a product state
-%            rhoAB = rhoA (x) rhoB = kron(rhoA, rhoB)
+%            rho = rhoA (x) rhoB = kron(rhoA, rhoB)
     
     if ~def.useSym
-        warning('The nonsymmetric primal form is inefficient. Set ''useSym'', 1')
+        error('For now, we only support the symmetric form.');
     end
-    if def.toReal
-        warning('Real formulation is not supported in primals. Use SymmetricExtensionConeDualY.');
-    end
+    
     dims = def.dims;
-    k = def.k;
-    ppt = def.ppt;
-    usePPT = length(ppt) > 0;
-    useSym = def.useSym;
     dA = dims(1);
     dB = dims(2);
+    d = dA*dB;
+    k = def.k;
+    
     if k == 1 % handle separately the PPT criterion alone, without extension
         d = dA*dB;
         if length(ppt) == 0
@@ -33,98 +30,81 @@ function rhoAB = SymmetricExtensionConeC(def)
             variable rhoAB(d, d) semidefinite hermitian % main variable
             cvx_end
         else
-            cvx_begin set sdp
-            variable rhoAB(d, d) semidefinite hermitian % main variable
-            variable pptAB(d, d) semidefinite hermitian % partial transpose
-            rhoTA = reshape(rhoAB, [dB dA dB dA]);
-            rhoTA = permute(rhoTA, [3 2 1 4]);
-            rhoTA = reshape(rhoTA, [d d]);
-            rhoTA == pptAB
-            cvx_end
+            error('TODO: better implementation');
+            %            cvx_begin set sdp
+            %            variable rhoAB(d, d) semidefinite hermitian % main variable
+            %            variable pptAB(d, d) semidefinite hermitian % partial transpose
+            %            hermMatIndices = SymmetricSubspace(dA*dB, 2);
+            %            hermMatIndices 
+            %            rhoTA = reshape(rhoAB, [dB dA dB dA]);
+            %            rhoTA = permute(rhoTA, [3 2 1 4]);
+            %            rhoTA = reshape(rhoTA, [d d]);
+            %            rhoTA == pptAB
+            %            cvx_end
         end
         return
     end
 
-    % start the convex cone definition
-    cvx_begin set sdp
-    variable rhoAB(dA*dB, dA*dB) hermitian % main variable
+    ppt = def.ppt;
+    nPPT = length(ppt);
+    tauS = SymmetricSubspace(dB, k);
+    dBsym = tauS.dim;
+    pptS1 = cell(nPPT, 1);
+    pptS2 = cell(nPPT, 1);
+    for i = 1:nPPT
+        p = ppt(i);
+        pptS1{i} = SymmetricSubspace(dB, p);
+        pptS2{i} = SymmetricSubspace(dB, k - p);
+    end
+    
+    % Constraints
+    % tau reproduces rho
+    
+    % (full) index subspaces AB and R = B^(k-1)
+    B_A = MultiIndex([dB dA]);
+    AB_AB = MultiIndex([d d]);
+    B_A_B_A = MultiIndex([dB dA dB dA]);
+    Bk = MultiIndex(dB*ones(1, k));
+    B_R = MultiIndex([dB dB^(k-1)]);
+    Bsym_A = MultiIndex([dBsym dA]);
+    Bsym_A_Bsym_A = MultiIndex([dBsym dA dBsym dA]);
+    %     = MultiIndex([dB dB*ones(1, k-1)]);
+    
+    nRest = dB^(k-1); % dimension over which we perform the partial trace
+    traceOver = (1:nRest)';
+    nRepr = (d+1)*d/2; % upper triangle dimension
+    reprRho = sparse(nRepr, d^2);
+    reprTau = sparse(nRepr, dBsym*dA*dBsym*dA);
+    i = 1;
+    for r = 1:d
+        rBA = B_A.indToSub(r);
+        rB = rBA(:,1);
+        rA = rBA(:,2);
+        rBfull = Bk.indToSub(B_R.subToInd([rB*ones(nRest, 1) traceOver])); % format B_R to B_B.._B
+        rBsym = tauS.subToIndSym(rBfull);
+        for c = r:d % restrict constraints to upper triangle
+            cBA = B_A.indToSub(c);
+            cB = cBA(:,1);
+            cA = cBA(:,2);
+            cBfull = Bk.indToSub(B_R.subToInd([cB*ones(nRest, 1) traceOver])); % format B_R to B_B.._B
+            cBsym = tauS.subToIndSym(cBfull);
+            
+            reprRho(i, AB_AB.subToInd([r c])) = 1;
+            tauInd = Bsym_A_Bsym_A.subToInd([rBsym rA*ones(nRest, 1) cBsym cA*ones(nRest, 1)]);
+            for j = 1:nRest
+               reprTau(i, tauInd(j)) = reprTau(i, tauInd(j)) + 1;
+            end
+            i = i + 1;
+        end
+    end
 
-    if useSym
-        [~, G] = BasisSymmetricSubspace(dB, k);
-        dBext = size(G, 2);
-        variable tau(dA*dBext, dA*dBext) semidefinite hermitian % variable
-        conv = kron(eye(dA), G);
-        tauFull = conv * tau * conv';
-    else
-        dBext = dB^k;
-        [~, nPi, dPi] = ProjectorSymmetricSubspace(dB, k);
-        nPi = kron(eye(dA), nPi);
-        variable tauFull(dA*dBext, dA*dBext) semidefinite hermitian % variable
-        nPi * tauFull * nPi == dPi * dPi * tauFull; % symmetry
-    end
-    tauAB = reshape(tauFull, [dB dB^(k-1) dA dB dB^(k-1) dA]);
-    tauAB = permute(tauAB, [1 3 4 6 2 5]);
-    tauAB = reshape(tauAB, [dB*dA*dB*dA dB^(k-1)*dB^(k-1)]);
-    % partial trace
-    tauAB = tauAB * reshape(eye(dB^(k-1)), dB^(k-1)*dB^(k-1), 1);
-    tauAB = reshape(tauAB, [dB*dA dB*dA]);
-    switch def.approx
-      case 'inner'
-        % apply the correction of Eqs. (3) and (4) of DOI:10.1103/PhysRevLett.103.160404
-        if isequal(def.ppt, [])
-            en = 1/(k + dB);
-        else
-            Jn = floor(k/2) + 1;
-            Ja = dB - 2;
-            Jb = mod(k, 2);
-            en = (1 - max(j_polynomial_zeros(Jn, Ja, Jb)))*dB/(2*(dB-1));
-        end
-        tauA = reshape(tauAB, [dB dA dB dA]);
-        tauA1 = permute(tauA, [2 4 1 3]);
-        tauA2 = reshape(tauA1, [dA*dA dB*dB]);
-        tauA3 = tauA2 * reshape(eye(dB), [dB*dB 1]);
-        tauA4 = reshape(tauA3, [dA dA]);
-        tauAB1 = (1 - en) * tauAB + en * workaround_kron(tauA4, eye(dB)/dB);
-      otherwise % 'exact' or 'outer'
-        tauAB1 = tauAB;
-    end
-    rhoAB == tauAB1; % constraint
-    if usePPT
-        if useSym
-            for i = 1:length(ppt)
-                k1 = ppt(i);
-                k2 = k - ppt(i);
-                %[~, G1] = BasisSymmetricSubspace(dB, k1);
-                %[~, G2] = BasisSymmetricSubspace(dB, k2);
-                %dB1 = size(G1, 2);
-                %dB2 = size(G2, 2);
-                dB1 = dB^k1;
-                dB2 = dB^k2;
-                conv = kron(eye(dA), G);
-                %conv = kron(eye(dA), kron(G1, G2) \ G); % split the symmetric subspace
-                tauPPT = tau;
-                tauPPT = conv * tau * conv';
-                tauPPT = reshape(tauPPT, [dB1 dB2 dA dB1 dB2 dA]);
-                tauPPT = permute(tauPPT, [4 2 3 1 5 6]);
-                tauPPT = reshape(tauPPT, [dB1*dB2*dA dB1*dB2*dA]);
-                variable(['tauPPTvar' num2str(i) '(dB1*dB2*dA, dB1*dB2*dA)'], 'semidefinite', 'hermitian');
-                %                tauPPTvar >= 0
-                tauPPTvar = eval(['tauPPTvar' num2str(i)]);
-                tauPPTvar == tauPPT; % PPT constraint
-            end
-        else
-            for i = 1:length(ppt)
-                k1 = ppt(i);
-                k2 = k - ppt(i);
-                tauPPT = reshape(tauFull, [dB^k1 dB^k2 dA dB^k1 dB^k2 dA]);
-                tauPPT = permute(tauPPT, [4 2 3 1 5 6]);
-                tauPPT = reshape(tauPPT, [dB^k*dA dB^k*dA]);
-                variable(['tauPPTvar' num2str(i) '(dB^k*dA, dB^k*dA)'], 'semidefinite', 'hermitian');
-                %                tauPPTvar >= 0
-                tauPPTvar = eval(['tauPPTvar' num2str(i)]);
-                tauPPTvar == tauPPT; % PPT constraint
-            end
-        end
-    end
+    % start the convex cone definition
+    
+    cvx_begin set sdp
+    variable rho(dB*dA, dB*dA) hermitian % main variable
+    variable tau(dBsym*dA, dBsym*dA) hermitian % symmetric extension in symmetric basis
+    rho >= 0
+    tau >= 0
+    reprRho * rho(:) == reprTau * tau(:)
     cvx_end
 end

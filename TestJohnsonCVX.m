@@ -11,9 +11,9 @@ ks = [2 3 4];       % number of copies
 vs = [2/3 5/9 1/2]; % visibilities
 cvx_solver sdpt3
 for i = 1:3
-    for useSym = 0:1
+    for useSym = 1%0:1
         def = SymmetricExtensionDef([2 2], 'outer', ks(i), 'ppt', [], 'useSym', useSym, 'toReal', 0);
-        cvx_begin sdp quiet
+        cvx_begin sdp % quiet
         variable v;
         maximize(v)
         subject to

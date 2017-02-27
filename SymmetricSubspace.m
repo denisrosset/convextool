@@ -166,6 +166,12 @@ classdef SymmetricSubspace
         end
     end
     methods(Static)
+        function rho = herm(d)
+            cvx_begin set sdp
+            variable rho(d, d) hermitian
+            rho >= 0
+            cvx_end
+        end
         function dim = computeDimension(d, n)
             dim = nchoosek(n + d - 1, n);
         end
