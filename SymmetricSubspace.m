@@ -2,7 +2,6 @@ classdef SymmetricSubspace
     properties
         d;
         n;
-        dims;
         dim;
         cumProdFull;
     end
@@ -38,14 +37,14 @@ classdef SymmetricSubspace
                     sizeOfBlock = SymmetricSubspace.computeDimension(obj.d - firstCol + 1, obj.n - 1);
                     startIndex = nElementsBefore + 1;
                     endIndex = startIndex + sizeOfBlock - 1;
-                    if rStart <= nRows && ind(rStart) <= endIndex
+                    if rStart <= nRows && sortedInd(rStart) <= endIndex
                         % we have a block
                         rNextStart = rStart + 1;
-                        while rNextStart <= nRows && ind(rNextStart) <= endIndex
+                        while rNextStart <= nRows && sortedInd(rNextStart) <= endIndex
                             rNextStart = rNextStart + 1;
                         end
                         rEnd = rNextStart - 1;
-                        remainingColsInd = ind(rStart:rEnd) - nElementsBefore;
+                        remainingColsInd = sortedInd(rStart:rEnd) - nElementsBefore;
                         remainingColsSub = SymmetricSubspace(obj.d - firstCol + 1, obj.n - 1).indToSubSym(remainingColsInd);
                         sortedSub(rStart:rEnd, 1) = firstCol;
                         sortedSub(rStart:rEnd, 2:end) = remainingColsSub + firstCol - 1;
@@ -104,7 +103,7 @@ classdef SymmetricSubspace
         function sub = indToSubFull(obj, ind)
             ind = ind(:) - 1;
             sub = zeros(length(ind), obj.n);
-            for i = 1:obj.d
+            for i = 1:obj.n
                 sub(:, i) = mod(ind, obj.d);
                 ind = ind - sub(:, i);
                 sub(:, i) = sub(:, i) + 1;
@@ -112,9 +111,8 @@ classdef SymmetricSubspace
             end
         end
         function ind = subToIndFull(obj, sub);
-            cum = 1;
-            ind = 1;
-            ind = cumProdFull' * (sub - 1) + 1;
+            assert(size(sub, 2) == obj.n);
+            ind = (obj.cumProdFull * (sub' - 1) + 1)';
         end
     end
     methods(Static)
