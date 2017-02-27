@@ -16,9 +16,13 @@ classdef SymmetricSubspace
                     obj.dimTable(i, j) = SymmetricSubspace.computeDimension(i, j);
                 end
             end
-            obj.dim = obj.dimTable(d, n);
-            p = cumprod(d*ones(1, n));
-            obj.cumProdFull = [1 p(1:end-1)];
+            if n == 0
+                obj.dim = 1;
+            else
+                obj.dim = obj.dimTable(d, n);
+            end
+            cp = cumprod(d*ones(1, n));
+            obj.cumProdFull = [1 cp(1:end-1)];
         end
         function sub = indToSubSym(obj, ind)
         % indToSubSym Convert from an index of the symmetric basis to subindices
@@ -30,11 +34,18 @@ classdef SymmetricSubspace
         %        sub(r, :) = [c1 c2 ... cn] with 1 <= c1 <= <= c2 <= ... <= cn <= d
             ind = ind(:);
             nRows = length(ind);
-            [sortedInd, index] = sort(ind);
-            nRows = length(ind);
-            sortedSub = SymmetricSubspace.indToSubSymHelper(sortedInd, obj.d, obj.n, obj.dimTable);
-            sub = zeros(nRows, obj.n);
-            sub(index, :) = sortedSub;
+            switch obj.n
+              case 0
+                sub = zeros(nRows, 0);
+              case 1
+                sub = ind;
+              otherwise
+                [sortedInd, index] = sort(ind);
+                nRows = length(ind);
+                sortedSub = SymmetricSubspace.indToSubSymHelper(sortedInd, obj.d, obj.n, obj.dimTable);
+                sub = zeros(nRows, obj.n);
+                sub(index, :) = sortedSub;
+            end
         end
         function ind = subToIndSym(obj, sub)
         % subToIndSym Converts from subindices to the index in the symmetric basis
@@ -46,15 +57,18 @@ classdef SymmetricSubspace
         %
         % OUTPUT  ind is a vector of length m, whose r-th element correspond to the 
         %         index of sub(r, :) in the symmetric basis
-            if obj.n == 1
+            nRows = size(sub, 1);
+            switch obj.n
+              case 0
+                ind = ones(nRows, 1);
+              case 1
                 ind = sub;
-            else
+              otherwise
                 sub = sort(sub')'; % put each row of subindices in increasing order
                                    % sort treats columns individually, so transpose
                 [sortedSub, index] = sortrows(sub); % sorts the subindices for speed
                                                     % we have sortedSub = sub(index, :)
                 rStart = 1;
-                nRows = size(sortedSub, 1);
                 sortedInd = SymmetricSubspace.subToIndSymHelper(sortedSub, obj.d, obj.n, obj.dimTable);
                 ind = zeros(nRows, 1);
                 ind(index) = sortedInd;

@@ -4,7 +4,7 @@ end
 
 function testOneCopy(testCase)
     n = 1;
-    for d = randi(200, 100, 1)'
+    for d = randi(200, 1, 100)
         ind = randi(d, 100, 1);
         sub = SymmetricSubspace(d, n).indToSubSym(ind);
         assert(isequal(sub, ind));
@@ -15,11 +15,23 @@ end
 
 function testDimensionOne(testCase)
     d = 1;
-    for n = randi(200, 100, 1)'
+    for n = randi(200, 1, 100)
         m = randi(100);
         ind = ones(m, 1);
         sub = SymmetricSubspace(d, n).indToSubSym(ind);
         assert(isequal(sub, ones(m, n)));
+    end
+end
+
+function TestZeroCopies(testCase)
+    n = 0;
+    for d = randi(200, 1, 100)
+        m = randi(100);
+        ind = ones(m, 1);
+        sub = SymmetricSubspace(d, n).indToSubSym(ind);
+        assert(isequal(size(sub), [m 0]));
+        ind1 = SymmetricSubspace(d, n).subToIndSym(sub);
+        assert(isequal(ind, ind1));
     end
 end
 
