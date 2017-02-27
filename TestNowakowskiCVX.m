@@ -11,14 +11,18 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 0 0 0]/2;
 v = sdpvar;
-for useSym = 0:1
-    def = SymmetricExtensionDef([2 2], 2, 'ppt', [], 'useSym', useSym, 'toReal', 0);
+for useSym = 1
+    def = SymmetricExtensionDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym, 'toReal', 0);
     cvx_solver sdpt3
-    cvx_begin sdp quiet
-    variable v
+    cvx_begin sdp
+    %    cvx_dualize off
+    variable v nonnegative
     maximize(v)
     subject to
-    state00*(1-v) + psiplus*v == SymmetricExtensionConeC(def);
+    variable rhoAB(4,4) hermitian
+    rhoAB >= 0
+    rhoAB == state00*(1-v) + psiplus*v
+    rhoAB == SymmetricExtensionConeC(def);
     cvx_end
     assert(abs(v - 2/3) < 1e-5);
 end

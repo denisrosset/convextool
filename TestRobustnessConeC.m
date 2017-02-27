@@ -10,7 +10,7 @@ for dA = 2:3
             cvx_solver sdpt3
             cvx_begin sdp
             variable nu nonnegative
-            def = SymmetricExtensionDef([dA dB], 1, 'ppt', 'doherty');
+            def = SymmetricExtensionDef([dA dB], 'exact');
             {nu density} == RobustnessConeC(def);
             minimize nu
             cvx_end

@@ -16,7 +16,7 @@ C2 = C2';
 C3 = C3';
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 for useSym = 0:1
-    def = SymmetricExtensionDef([3 3], 2, 'ppt', 'doherty', 'useSym', useSym, 'toReal', 0);
+    def = SymmetricExtensionDef([3 3], 'outer', 2, 'ppt', 'doherty', 'useSym', useSym, 'toReal', 0);
     cvx_solver sdpt3
     cvx_begin sdp quiet
     variable v
