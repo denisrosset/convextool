@@ -28,6 +28,7 @@ classdef MultiIndex
                 ind = ind - 1; % convert to 0-based indices
                 sub = zeros(nRows, obj.n);
                 for i = 1:obj.n
+                    % TODO: replace modulo by libdivide-like method
                     sub(:, i) = mod(ind, obj.dims(i));
                     ind = ind - sub(:, i);
                     ind = ind ./ obj.dims(i);

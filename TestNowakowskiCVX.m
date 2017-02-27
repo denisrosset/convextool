@@ -11,7 +11,7 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 0 0 0]/2;
 for useSym = 1
-    def = SymmetricExtensionDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym, 'toReal', 0);
+    def = SymmetricExtensionDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym);
     cvx_solver sdpt3
     cvx_begin sdp
     %cvx_dualize off

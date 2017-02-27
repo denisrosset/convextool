@@ -1,5 +1,7 @@
 classdef SymmetricExtensionDef
+    
     properties(SetAccess = immutable)
+        
         dims;      % = [dA dB], dimensions of the subsystems composing the symmetric cone        
 
         dA;        % Dimension of the first subsystem A
@@ -33,8 +35,11 @@ classdef SymmetricExtensionDef
                    % otherwise pptCuts = ppt.
         
         useSym;    % Whether to use the symmetric subspace (default: 1)
+        
     end
+    
     methods
+        
         function def = SymmetricExtensionDef(dims, approx, k, varargin)
         % SymmetricExtensionDef Defines a symmetric extension cone
         %
@@ -121,7 +126,7 @@ classdef SymmetricExtensionDef
                     end
                     def.useSym = value;
                   otherwise
-                    warning(['Unsupported option: ' toString(varargin{1})]);
+                    warning(['Unsupported option: ' toString(key)]);
                 end
             end
 
@@ -142,6 +147,18 @@ classdef SymmetricExtensionDef
                     error('The inner approximation is only valid for ''ppt'' = [] or ''navascues''');
                 end
             end
+        end
+        
+        function epsN = innerFactor(def)
+        % Correction of Eqs. (3) and (4) of DOI:10.1103/PhysRevLett.103.160404
+            if length(def.pptCuts) == 0
+                epsN = 1/(def.k + def.dB);
+            else
+                Jn = floor(def.k/2) + 1;
+                Ja = def.dB - 2;
+                Jb = mod(def.k, 2);
+                epsN = (1 - max(j_polynomial_zeros(Jn, Ja, Jb)))*def.dB/(2*(def.dB-1));
+            end            
         end
         
         function [Arho AtauSym] = ConstraintRepresentsSym(def)
@@ -168,9 +185,10 @@ classdef SymmetricExtensionDef
             
             nRest = dB^(k-1); % dimension over which we perform the partial trace
             traceOver = (1:nRest)';
-            nRepr = (d+1)*d/2; % upper triangle dimension
-            Arho = sparse(nRepr, d^2);
-            AtauSym = sparse(nRepr, dBsym*dA*dBsym*dA);
+            nEqs = (d+1)*d/2; % upper triangle dimension
+            Arho = sparse(nEqs, d^2);
+            AtauSymT = sparse(dBsym*dA*dBsym*dA, nEqs); % stores the transpose, MATLAB uses
+                                                         % compressed column storage
             i = 1;
             for r = 1:d
                 rBA = B_A.indToSub(r);
@@ -187,14 +205,83 @@ classdef SymmetricExtensionDef
                     
                     Arho(i, AB_AB.subToInd([r c])) = 1;
                     tauInd = Bsym_A_Bsym_A.subToInd([rBsym rA*ones(nRest, 1) cBsym cA*ones(nRest, 1)]);
-                    for j = 1:nRest
-                        AtauSym(i, tauInd(j)) = AtauSym(i, tauInd(j)) + 1;
-                    end
+                    tauOnes = ones(size(tauInd));
+                    col = sparse(tauInd, tauOnes, tauOnes, dBsym*dA*dBsym*dA, 1);
+                    AtauSymT(:, i) = col;
                     i = i + 1;
                 end
             end
-            
+            AtauSym = AtauSymT.';
+        end
+        
+        function [Arho Appt] = ConstraintPPT(def)           
+        % equality constraints that express that
+        % rho(dB*dA, dB*dA)^TB == ppt(dB*dA, dB*dA)
+            dA = def.dA;
+            dB = def.dB;
+            d = dA*dB;
+            matRCSym = SymmetricSubspace(d, 2); % parameterization of upper triangle
+            nEqs = matRCSym.dim;
+            rc = matRCSym.indToSubSym((1:nEqs)');
+            BA_BA = MultiIndex([d d]);
+            B_A = MultiIndex([dB dA]);
+            B_A_B_A = MultiIndex([dB dA dB dA]);
+            rBA = B_A.indToSub(rc(:,1));
+            cBA = B_A.indToSub(rc(:,2));
+            rhoInd = BA_BA.subToInd(rc);
+            pptInd = B_A_B_A.subToInd([cBA(:,1) rBA(:,2) rBA(:,1) cBA(:,2)]);
+            Arho = sparse(1:nEqs, rhoInd', ones(1, nEqs), nEqs, d*d);
+            Appt = sparse(1:nEqs, pptInd', ones(1, nEqs), nEqs, d*d);
+        end
+        
+        function [ApptSym AtauSym] = ConstraintPPTCutSym(def, p)
+        % equality constraints that express that
+        % tauFull(dB^k*dA, dB^k*dA)^T1...^Tp == sigmaFull(dB^k*dA, dB^k*dA)
+        % in their respective symmetric subspaces
+            dA = def.dA;
+            dB = def.dB;
+            d = dA*dB;
+            k = def.k;
+            k1 = p;
+            k2 = k - p;
+            sym = SymmetricSubspace(dB, k);
+            dBsym = sym.dim;
+            sym1 = SymmetricSubspace(dB, k1);
+            sym2 = SymmetricSubspace(dB, k2);
+            dB1 = sym1.dim;
+            dB2 = sym2.dim;
+            dPPT = dA * dB1 * dB2;
+            B2_B1_A = MultiIndex([dB2 dB1 dA]);
+            B2B1A_B2B1A = MultiIndex([dB2*dB1*dA dB2*dB1*dA]);
+            Bsym_A_Bsym_A = MultiIndex([dBsym dA dBsym dA]);                       
+            nEqs = (dPPT+1)*dPPT/2;
+            ApptSym = sparse(nEqs, dPPT^2);
+            AtauSymT = sparse(dBsym*dA*dBsym*dA, nEqs);
+            i = 1;
+            for r = 1:dPPT
+                cols = (r:dPPT)'; % upper triangle
+                nRows = length(cols);
+                rows = r*ones(nRows,1);
+                rB2B1A = B2_B1_A.indToSub(rows);
+                cB2B1A = B2_B1_A.indToSub(cols);
+                rA = rB2B1A(:,3);
+                cA = cB2B1A(:,3);
+                rBFullInd = [sym2.indToSubSym(cB2B1A(:,1)) sym1.indToSubSym(rB2B1A(:,2))];
+                cBFullInd = [sym2.indToSubSym(rB2B1A(:,1)) sym1.indToSubSym(cB2B1A(:,2))];
+                rBsym = sym.subToIndSym(rBFullInd);
+                cBsym = sym.subToIndSym(cBFullInd);
+                blockRows = i:i+nRows-1;
+                ApptSym(blockRows, B2B1A_B2B1A.subToInd([rows cols])) = eye(nRows);
+                AtauSymT(Bsym_A_Bsym_A.subToInd([rBsym rA cBsym cA]), blockRows) = eye(nRows);
+                i = i + nRows;
+            end
+            AtauSym = AtauSymT.';
         end
         
     end % methods
+    
+    methods(Static)
+        
+    end
+    
 end % classdef

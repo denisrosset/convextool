@@ -1,14 +1,14 @@
-function set = RobustnessConeC(def)
-% RobustnessConeC Outer approximation of the random robustness entanglement measure cone
+function set = AbsoluteRobustnessConeC(def)
+% AbsoluteRobustnessConeC Outer approximation of the absolute robustness entanglement measure cone
 %
-% {nu rho} = RobustnessConeC([dA dB]) returns the cone such that
+% {nu rho} = AbsoluteRobustnessConeC([dA dB]) returns the cone such that
 %
 % - rho is a bipartite density matrix, ordered such that the
 %   product state rhoAB = rhoA (x) rhoB = kron(rhoA, rhoB)
 % - nu is a nonnegative variable such that nu >= robustness(rho)
 %   where robustness(rho) is given by Eq. (11) of http://link.aps.org/doi/10.1103/PhysRevA.59.141
 %
-% The robustness is computed with respect to an approximation of
+% The absolute robustness is computed with respect to an approximation of
 % the separable cone given in the parameter 'def', obtained by SymmetricExtensionDef.
 %
 % For dA*dB <= 6, the approximation is exact if def.ppt = 'doherty' or [1].
