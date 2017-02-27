@@ -36,7 +36,9 @@ function [Cons Info] = SymmetricExtensionConePrimalY(rhoAB, def)
 %
 %              For k > 1
 % Info.reprC   The constraint that trace_{B2..Bk}(tau) == rhoAB
-     
+    if isequal(def.approx, 'inner')
+        error('Only implemented for the primal/CVX formulation SymmetricExtensionConeC.');
+    end    
     if ~def.useSym
         warning('The nonsymmetric primal form is inefficient. Set ''useSym'', 1');
     end

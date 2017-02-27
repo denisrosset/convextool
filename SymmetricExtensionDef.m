@@ -1,9 +1,16 @@
-function def = SymmetricExtensionDef(dims, k, varargin)
+function def = SymmetricExtensionDef(dims, approx, k, varargin)
 % SymmetricExtensionDef Defines a symmetric extension cone
 %
 % INPUTS
 %
 % dims       = [dA dB]  Dimension of subsystems A and B
+% approx     Either 'inner', 'outer' or 'approx'
+%            'outer' is the Doherty-type symmetric extension
+%            'exact' is valid only for dA*dB <= 6, and sets
+%                    k = 1 and 'ppt' = [1]
+%            'inner' is the Navascues inner approximation, valid
+%                    when 'ppt' = []
+%                    or 'ppt' = [ceil(k/2)] (that is 'ppt' = 'navascues')
 % k          Number of copies of subsystem B in the extension
 %
 % followed by the key/value pairs:
@@ -32,31 +39,61 @@ function def = SymmetricExtensionDef(dims, k, varargin)
 % of the symmetric extension of a qutrit-qutrit state, using two copies of B, 
 % with two additional PPT constraints
 %
-% def = SymmetricExtensionDef([3 3], 2, 'ppt', 'doherty')
+% def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', 'doherty')
 %
 % which is equivalent to
 %
-% def = SymmetricExtensionDef([3 3], 2, 'ppt', [1 2])
+% def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', [1 2])
 %
 % To use a formulation without symmetry handling, write:
 %   
-% def = SymmetricExtensionDef([3 3], 2, 'ppt', 'doherty', 'useSym', 0)
+% def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', 'doherty', 'useSym', 0)
 %
 % To enable real formulations:
-% def = SymmetricExtensionDef([3 3], 2, 'ppt', 'doherty', 'toReal', 1)
+% def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', 'doherty', 'toReal', 1)
 %
+% To obtain the PPT exact formulation for dA * dB <= 6, write:
+% def = SymmetricExtensionDef([dA dB], 1, 'exact')
 %
 % References
 % Navascues 2009, DOI: 10.1103/PhysRevLett.103.160404
 % Doherty 2004, DOI: 10.1103/PhysRevA.69.022308
     assert(length(dims) == 2);
-    assert(k >= 1);
-    defaults = struct('dims', dims(:)', ...
-                 'k', k, ...
-                 'ppt', [], ...
-                 'useSym', 1, ...
-                 'toReal', 1);
+    dA = dims(1);
+    dB = dims(2);
+    switch approx
+      case 'exact'
+        if dA * dB > 6 && dA > 1 && dB > 1
+            error('Exact formulations of the symmetric cone are valid for 2x2 and 2x3 states');
+        end
+        if nargin < 3
+            k = 1;
+        end
+        defaults = struct('dims', dims(:)', 'k', k, 'approx', approx, ...
+                          'ppt', [1], 'useSym', 1, 'toReal', 0);
+      otherwise
+        defaults = struct('dims', dims(:)', 'k', k, 'approx', approx, ...
+                          'ppt', [], 'useSym', 1, 'toReal', 0);
+    end
+        assert(k >= 1);
     def = interpret(defaults, varargin{:});
+    % verifies the sanity of the definition
+    switch def.approx
+      case 'exact'
+        if length(def.ppt) == 0
+            error('Exact formulations of the symmetric cone require PPT constraints.');
+        end
+      case 'inner'
+        if length(def.ppt) == 0
+            if def.k == 1
+                error('The inner approximation requires either PPT constraints or k > 1.')
+            end
+        elseif isequal(def.ppt, ceil(def.k/2))
+            % good
+        else
+            error('The inner approximation is only valid for ''ppt'' = [] or ''navascues''');
+        end
+    end
     function def = interpret(def, varargin)
         toString = @(var) evalc(['disp(var)']);
         switch length(varargin)

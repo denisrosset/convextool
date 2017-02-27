@@ -37,6 +37,9 @@ function [Cons Info] = SymmetricExtensionConeDualY(coeffs, def)
 %
 %              For k > 1
 % Info.reprC   The constraint that trace_{B2..Bk}(tau) == rhoAB
+    if isequal(def.approx, 'inner')
+        error('Only implemented for the primal/CVX formulation SymmetricExtensionConeC.');
+    end
     dims = def.dims;
     k = def.k;
     ppt = def.ppt;

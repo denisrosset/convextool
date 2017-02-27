@@ -11,10 +11,9 @@ function rrob = RandomRobustnessPureState(pureState, dims)
 %                pureState = kron(pureA, pureB)
 % dims = [dA dB] Dimensions of the subsystems dA and dB
     dA = dims(1);
-    dB = dims(2);    
+    dB = dims(2);
     % the Schmidt coefficients are given in decreasing order by svd in Matlab
     schmidt = svd(reshape(pureState, dB, dA));
     % analytic expression
     rrob = dA*dB*schmidt(1)*schmidt(2);
 end
-
