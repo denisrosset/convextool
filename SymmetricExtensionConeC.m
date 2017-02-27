@@ -44,67 +44,16 @@ function rho = SymmetricExtensionConeC(def)
         end
         return
     end
-
-    ppt = def.ppt;
-    nPPT = length(ppt);
+    
     tauS = SymmetricSubspace(dB, k);
     dBsym = tauS.dim;
-    pptS1 = cell(nPPT, 1);
-    pptS2 = cell(nPPT, 1);
-    for i = 1:nPPT
-        p = ppt(i);
-        pptS1{i} = SymmetricSubspace(dB, p);
-        pptS2{i} = SymmetricSubspace(dB, k - p);
-    end
-    
-    % Constraints
-    % tau reproduces rho
-    
-    % (full) index subspaces AB and R = B^(k-1)
-    B_A = MultiIndex([dB dA]);
-    AB_AB = MultiIndex([d d]);
-    B_A_B_A = MultiIndex([dB dA dB dA]);
-    Bk = MultiIndex(dB*ones(1, k));
-    B_R = MultiIndex([dB dB^(k-1)]);
-    Bsym_A = MultiIndex([dBsym dA]);
-    Bsym_A_Bsym_A = MultiIndex([dBsym dA dBsym dA]);
-    %     = MultiIndex([dB dB*ones(1, k-1)]);
-    
-    nRest = dB^(k-1); % dimension over which we perform the partial trace
-    traceOver = (1:nRest)';
-    nRepr = (d+1)*d/2; % upper triangle dimension
-    reprRho = sparse(nRepr, d^2);
-    reprTau = sparse(nRepr, dBsym*dA*dBsym*dA);
-    i = 1;
-    for r = 1:d
-        rBA = B_A.indToSub(r);
-        rB = rBA(:,1);
-        rA = rBA(:,2);
-        rBfull = Bk.indToSub(B_R.subToInd([rB*ones(nRest, 1) traceOver])); % format B_R to B_B.._B
-        rBsym = tauS.subToIndSym(rBfull);
-        for c = r:d % restrict constraints to upper triangle
-            cBA = B_A.indToSub(c);
-            cB = cBA(:,1);
-            cA = cBA(:,2);
-            cBfull = Bk.indToSub(B_R.subToInd([cB*ones(nRest, 1) traceOver])); % format B_R to B_B.._B
-            cBsym = tauS.subToIndSym(cBfull);
-            
-            reprRho(i, AB_AB.subToInd([r c])) = 1;
-            tauInd = Bsym_A_Bsym_A.subToInd([rBsym rA*ones(nRest, 1) cBsym cA*ones(nRest, 1)]);
-            for j = 1:nRest
-               reprTau(i, tauInd(j)) = reprTau(i, tauInd(j)) + 1;
-            end
-            i = i + 1;
-        end
-    end
-
-    % start the convex cone definition
-    
+    [Arho AtauSym] = def.ConstraintRepresentsSym;
+   
     cvx_begin set sdp
     variable rho(dB*dA, dB*dA) hermitian % main variable
-    variable tau(dBsym*dA, dBsym*dA) hermitian % symmetric extension in symmetric basis
+    variable tauSym(dBsym*dA, dBsym*dA) hermitian % symmetric extension in symmetric basis
     rho >= 0
-    tau >= 0
-    reprRho * rho(:) == reprTau * tau(:)
+    tauSym >= 0
+    Arho * rho(:) == AtauSym * tauSym(:)
     cvx_end
 end

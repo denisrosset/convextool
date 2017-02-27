@@ -144,15 +144,55 @@ classdef SymmetricExtensionDef
             end
         end
         
-        function [ARho ATau] = ConstraintRepresentsSym(def)
+        function [Arho AtauSym] = ConstraintRepresentsSym(def)
         % equality constraints that express that
         % tauFull(dB^k*dA, dB^k*dA) == rho(dB*dA, dB*dA)
-        % with tau represented in the symmetric subspace
-            
+        % with tau represented in the symmetric subspace as tauSym
+        %
+        % the constraint is Arho * rho(:) == AtauSym * tauSym(:)
             dA = def.dA;
             dB = def.dB;
+            d = dA*dB;
             k = def.k;
+            tauS = SymmetricSubspace(dB, k);
+            dBsym = tauS.dim;
+
+            % (full) index subspaces AB and R = B^(k-1)
+            B_A = MultiIndex([dB dA]);
+            AB_AB = MultiIndex([d d]);
+            B_A_B_A = MultiIndex([dB dA dB dA]);
+            Bk = MultiIndex(dB*ones(1, k));
+            B_R = MultiIndex([dB dB^(k-1)]);
+            Bsym_A = MultiIndex([dBsym dA]);
+            Bsym_A_Bsym_A = MultiIndex([dBsym dA dBsym dA]);
             
+            nRest = dB^(k-1); % dimension over which we perform the partial trace
+            traceOver = (1:nRest)';
+            nRepr = (d+1)*d/2; % upper triangle dimension
+            Arho = sparse(nRepr, d^2);
+            AtauSym = sparse(nRepr, dBsym*dA*dBsym*dA);
+            i = 1;
+            for r = 1:d
+                rBA = B_A.indToSub(r);
+                rB = rBA(:,1);
+                rA = rBA(:,2);
+                rBfull = Bk.indToSub(B_R.subToInd([rB*ones(nRest, 1) traceOver])); % format B_R to B_B.._B
+                rBsym = tauS.subToIndSym(rBfull);
+                for c = r:d % restrict constraints to upper triangle
+                    cBA = B_A.indToSub(c);
+                    cB = cBA(:,1);
+                    cA = cBA(:,2);
+                    cBfull = Bk.indToSub(B_R.subToInd([cB*ones(nRest, 1) traceOver])); % format B_R to B_B.._B
+                    cBsym = tauS.subToIndSym(cBfull);
+                    
+                    Arho(i, AB_AB.subToInd([r c])) = 1;
+                    tauInd = Bsym_A_Bsym_A.subToInd([rBsym rA*ones(nRest, 1) cBsym cA*ones(nRest, 1)]);
+                    for j = 1:nRest
+                        AtauSym(i, tauInd(j)) = AtauSym(i, tauInd(j)) + 1;
+                    end
+                    i = i + 1;
+                end
+            end
             
         end
         
