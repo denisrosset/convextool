@@ -12,8 +12,8 @@ rho = 0.9*rho + 0.2*noise;
 cvx_clear
 cvx_solver mosek
 for k = 5
-    inner = SymmetricExtensionDef([dA dB], 'inner', k, 'ppt', 'navascues');
-    outer = SymmetricExtensionDef([dA dB], 'outer', k, 'ppt', 'doherty');
+    inner = SeparableConeDef([dA dB], 'inner', k, 'ppt', 'navascues');
+    outer = SeparableConeDef([dA dB], 'outer', k, 'ppt', 'doherty');
     %    cvx_begin sdp
     %    cvx_precision low
     %    variable nu nonnegative

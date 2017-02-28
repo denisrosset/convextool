@@ -11,7 +11,7 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 0 0 0]/2;
 for useSym = 1 % TODO restore
-    def = SymmetricExtensionDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym);
+    def = SeparableConeDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym);
     cvx_clear
     cvx_begin sdp quiet
     variable v nonnegative
@@ -20,7 +20,7 @@ for useSym = 1 % TODO restore
     variable rhoAB(4,4) hermitian
     rhoAB >= 0
     rhoAB == state00*(1-v) + psiplus*v
-    rhoAB == SymmetricExtensionConeC(def);
+    rhoAB == SeparableConeC(def);
     cvx_end
     assert(abs(v - 2/3) < 1e-5);
 end

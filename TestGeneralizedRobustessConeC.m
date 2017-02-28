@@ -10,7 +10,7 @@ for dA = 2:3
             cvx_solver sdpt3
             cvx_begin sdp quiet
             variable nu nonnegative
-            def = SymmetricExtensionDef([dA dB], 'exact');
+            def = SeparableConeDef([dA dB], 'exact');
             {nu density} == GeneralizedRobustnessConeC(def);
             minimize nu
             cvx_end

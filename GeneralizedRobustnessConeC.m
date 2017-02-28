@@ -10,10 +10,8 @@ function set = GeneralizedRobustnessConeC(def)
 %   rhoS >= 0 in Eq. (11) of http://link.aps.org/doi/10.1103/PhysRevA.59.141,
 %   or, alternatively, following http://journals.aps.org/pra/pdf/10.1103/PhysRevA.67.054305
 %
-% The robustness is computed with respect to an approximation of
-% the separable cone given in the parameter 'def', obtained by SymmetricExtensionDef.
-%
-% For dA*dB <= 6, the approximation is exact if def.ppt = 'doherty' or [1].
+% The robustness is computed with respect to a formulation of
+% the separable cone given in the parameter 'def', obtained by SeparableConeDef.
 
     dims = def.dims;
     dA = dims(1);
@@ -25,7 +23,7 @@ function set = GeneralizedRobustnessConeC(def)
     variable subRhoM(d, d) hermitian % subnormalized state rhoS
     variable nu nonnegative
     subRhoM >= 0
-    rho + subRhoM == SymmetricExtensionConeC(def)
+    rho + subRhoM == SeparableConeC(def)
     nu == trace(subRhoM)
     cvx_end
     set = cvxtuple(struct('nu', nu, 'rho', rho));

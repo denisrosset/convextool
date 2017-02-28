@@ -1,8 +1,8 @@
-function rho = SymmetricExtensionConeC(def)
-% SymmetricExtensionConeC Approximation of the cone of separable operators
+function rho = SeparableConeC(def)
+% SeparableConeC Exact/approx. formulation of the cone of separable operators
 %
 % INPUTS
-% def        Symmetric cone definition, see SymmetricExtensionDef
+% def        Separable cone exact/approx. definition, see SeparableConeDef
 %
 % OUTPUTS
 % rho        Complex (dA*dB)x(dA*dB) matrix representing the AB system

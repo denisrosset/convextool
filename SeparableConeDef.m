@@ -1,4 +1,4 @@
-classdef SymmetricExtensionDef
+classdef SeparableConeDef
     
     properties(SetAccess = immutable)
         
@@ -40,8 +40,8 @@ classdef SymmetricExtensionDef
     
     methods
         
-        function def = SymmetricExtensionDef(dims, approx, k, varargin)
-        % SymmetricExtensionDef Defines a symmetric extension cone
+        function def = SeparableConeDef(dims, approx, k, varargin)
+        % SeparableConeDef Defines a exact/approx. formulation of the separable cone
         %
         % INPUTS
         %
@@ -51,7 +51,7 @@ classdef SymmetricExtensionDef
         % 
         % Additional properties are given each by a key/value pair. Possible keys
         % are 'ppt', 'useSym', and are explained in the 'properties' section of
-        % 'SymmetricExtensionDef.m'
+        % 'SeparableConeDef.m'
         %
         % Examples
         %
@@ -59,18 +59,18 @@ classdef SymmetricExtensionDef
         % of the symmetric extension of a qutrit-qutrit state, using two copies of B, 
         % with two additional PPT constraints
         %
-        % def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', 'doherty')
+        % def = SeparableConeDef([3 3], 'outer', 2, 'ppt', 'doherty')
         %
         % which is equivalent to
         %
-        % def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', [1 2])
+        % def = SeparableConeDef([3 3], 'outer', 2, 'ppt', [1 2])
         %
         % To use a formulation without symmetry handling, write:
         %   
-        % def = SymmetricExtensionDef([3 3], 2, 'outer', 'ppt', 'doherty', 'useSym', 0)
+        % def = SeparableConeDef([3 3], 'outer', 2, 'ppt', 'doherty', 'useSym', 0)
         %
         % To obtain the PPT exact formulation for dA * dB <= 6, write:
-        % def = SymmetricExtensionDef([dA dB], 1, 'exact')
+        % def = SeparableConeDef([dA dB], 'exact')
         %
         % References
         % Navascues 2009, DOI: 10.1103/PhysRevLett.103.160404
