@@ -28,6 +28,7 @@ function set = NegativityConeC(dims)
     sigmaP - sigmaM == rhoTA
     sigmaP >= 0
     sigmaM >= 0
+    rho >= 0
     cvx_end
     set = cvxtuple(struct('nu', nu, 'rho', rho));
 end

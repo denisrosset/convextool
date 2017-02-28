@@ -11,4 +11,4 @@ variable rho(4, 4) hermitian
 rho == singlet
 minimize nu
 cvx_end
-nu
+assert(abs(nu - 1/2) < 1e-7);

@@ -22,13 +22,14 @@ dY = 2;
 v = 1;
 rho = WernerState(v);
 
-% measurements
+% Alice and Bob perform a Bell measurement
+% the variable A is a cell(1,4) with A{a} 4x4 Hermitian POVM elements
 A = BellMeasurement;
 B = BellMeasurement;
 
+% simulates the correlations
 Pabxy = MDIEW_Simulate(X, Y, rho, A, B);
 
-% serious stuff here
 nX = length(X);
 nY = length(Y);
 nA = length(A);
@@ -38,37 +39,72 @@ nB = length(B);
 cvx_clear
 cvx_begin
 
-variable Pi(dX*dY,dX*dY,nA,nB) hermitian % effective POVM elements
-variable ent
-variable nu(nA,nB) nonnegative
-dual variable beta
+    variable Pi(dX*dY,dX*dY,nA,nB) hermitian % effective POVM elements
+    variable entanglement_lb
+    variable nu(nA,nB) nonnegative
 
-minimize ent
+    % dual variable = MDIEW
+    dual variable beta
 
-expressions Pideal(nA,nB,nX,nY) nonnegative
+    minimize entanglement_lb
 
-for x = 1:nX
-    for y = 1:nY
-        inputStates = kron(X{x}, Y{y});
-        for a = 1:nA
-            for b = 1:nB
-                Pideal(a,b,x,y) = dX*dY*trace(inputStates * Pi(:,:,a,b));
+    subject to
+
+    % we first compute the left hand side of the constraint
+    expressions Pideal(nA,nB,nX,nY) nonnegative
+    for x = 1:nX
+        for y = 1:nY
+            inputStates = kron(X{x}, Y{y});
+            for a = 1:nA
+                for b = 1:nB
+                    Pideal(a,b,x,y) = dX*dY*trace(inputStates * Pi(:,:,a,b));
+                end
             end
         end
     end
-end
 
-beta: Pideal == Pabxy
+    % and here is the constraint: the effective POVM reproduces the correlations
+    beta: Pideal == Pabxy
 
-sum_nu = 0;
+    % now, let's find the lower bound on the entanglement measure
+    sum_nu = 0;
 
-for a = 1:nA
-    for b = 1:nB
-        {nu(a,b) Pi(:,:,a,b)} == NegativityConeC([dX dY])
-        sum_nu = sum_nu + nu(a,b);
+    for a = 1:nA
+        for b = 1:nB
+            % constraint: entanglement cone
+            def = SeparableConeDef([dX dY], 'exact');
+            {nu(a,b) Pi(:,:,a,b)} == NegativityConeC([dX dY])
+            sum_nu = sum_nu + nu(a,b);
+        end
     end
-end
 
-ent == sum_nu
+    entanglement_lb == sum_nu
 
 cvx_end
+
+disp('A lower bound on the entanglement from the MDIEW correlations is:')
+
+entanglement_lb
+
+disp('')
+
+disp('Whereas the entanglement in the state is')
+
+cvx_clear
+cvx_begin sdp quiet
+variable statenu nonnegative
+minimize statenu
+{statenu rho} == NegativityConeC([dX dY])
+cvx_end
+
+statenu
+
+disp('')
+
+disp('MDIEW coefficients in dual variable beta')
+
+disp('')
+
+disp('Recomputing the MDIEW value')
+
+dot(beta(:), Pabxy(:))
