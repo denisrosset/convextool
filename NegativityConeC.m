@@ -21,7 +21,7 @@ function set = NegativityConeC(dims)
     variable sigmaP(d, d) hermitian
     variable sigmaM(d, d) hermitian
     variable nu nonnegative
-    trace(sigmaM) <= nu
+    trace(sigmaM) == nu
     rhoTA = reshape(rho, [dB dA dB dA]);
     rhoTA = permute(rhoTA, [3 2 1 4]);
     rhoTA = reshape(rhoTA, [d d]);
