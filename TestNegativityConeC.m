@@ -2,6 +2,7 @@ singlet = [0 0 0 0
            0 1 -1 0
            0 -1 1 0
            0 0 0 0]/2;
+cvx_clear
 cvx_solver sdpt3
 cvx_begin sdp quiet
 variable nu nonnegative

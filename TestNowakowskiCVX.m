@@ -10,11 +10,10 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 1 1 0
            0 0 0 0]/2;
-for useSym = 1
+for useSym = 1 % TODO restore
     def = SymmetricExtensionDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym);
-    cvx_solver sdpt3
-    cvx_begin sdp
-    %cvx_dualize off
+    cvx_clear
+    cvx_begin sdp quiet
     variable v nonnegative
     maximize(v)
     subject to

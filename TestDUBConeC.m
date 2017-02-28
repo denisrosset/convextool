@@ -17,7 +17,7 @@ for a = [1/3 1/2 2/3]
     psi2 = psi2(:);
     rho = (psi0*psi0' + psi1*psi1' + psi2*psi2')/3;
     exactValue = 1 + sqrt(a*(1-a));
-    cvx_solver sdpt3
+    cvx_clear
     cvx_begin sdp quiet
     variable nu nonnegative
     {nu rho} == DUBConeC([3 3]);

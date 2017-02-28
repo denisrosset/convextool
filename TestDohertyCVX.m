@@ -17,8 +17,8 @@ C3 = C3';
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 for useSym = 1%0:1
     def = SymmetricExtensionDef([3 3], 'outer', 3, 'ppt', 'doherty', 'useSym', useSym);
-    cvx_solver sedumi
-    cvx_begin sdp
+    cvx_clear
+    cvx_begin sdp quiet
     variable v
     maximize(v)
     subject to
@@ -26,7 +26,8 @@ for useSym = 1%0:1
     cvx_end
     assert(abs(v - 3) < 1e-4);
     
-    cvx_begin sdp
+    cvx_clear
+    cvx_begin sdp quiet
     variable v
     minimize(v)
     subject to

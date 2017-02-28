@@ -6,8 +6,8 @@ for dA = 2:3
             exactValue = RandomRobustnessPureState(pureState, [dA dB]);                               
             % to compare to the conic optimization value
             density = pureState * pureState';
-            cvx_solver sdpt3
-            cvx_begin sdp
+            cvx_clear
+            cvx_begin sdp quiet
             variable nu nonnegative
             def = SymmetricExtensionDef([dA dB], 'exact');
             {nu density} == RandomRobustnessConeC(def);

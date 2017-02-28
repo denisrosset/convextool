@@ -9,33 +9,17 @@ classdef MultiIndex
         dims;
     end
     properties(Access = private)
-        cumProd;
+        cumProd; % hiding the cumProd property, as it is uint32 and
+                 % will silently convert doubles to uint32 when
+                 % used outside MultiIndex
     end
     methods
-        function obj = MultiIndex(dims, optimize)
-            if nargin > 1
-                obj.optimize = optimize;
-            else
-                obj.optimize = 0;
-            end
+        function obj = MultiIndex(dims)
             dims = dims(:)';
             obj.dims = dims;
             obj.n = length(dims);
             cp = cumprod(uint32(dims));
             obj.cumProd = [1 cp(1:end-1)];
-            if obj.optimize && prod(dims) < 2^32 % everything fits in 32 bits
-                obj.pre_shift = zeros(1, obj.n, 'int32');
-                obj.multiplier = zeros(1, obj.n, 'uint64');
-                obj.increment = zeros(1, obj.n, 'int32');
-                obj.full_shift = zeros(1, obj.n, 'int32');
-                for i = 1:obj.n
-                    ld = LibDivide32(obj.dims(i));
-                    obj.pre_shift(i) = ld.pre_shift;
-                    obj.multiplier(i) = ld.multiplier;
-                    obj.increment(i) = ld.increment;
-                    obj.full_shift(i) = ld.full_shift;
-                end
-            end
         end
         function sub = indToSub(obj, ind)
         % given a vector of m indices, returns a matrix of size (m x n) of subindices
@@ -47,12 +31,12 @@ classdef MultiIndex
               case 1
                 sub = ind;
               otherwise
-                ind = uint32(ind - 1); % convert to 0-based indices
+                indm = uint32(ind - 1); % convert to 0-based indices
                 sub = zeros(nRows, obj.n, 'uint32');
                 for i = 1:obj.n
-                    sub(:, i) = mod(ind, uint32(obj.dims(i)));
-                    ind = ind - sub(:, i);
-                    ind = ind ./ obj.dims(i);
+                    sub(:, i) = mod(indm, uint32(obj.dims(i)));
+                    indm = indm - sub(:, i);
+                    indm = indm ./ obj.dims(i);
                 end
                 sub = cast(sub + 1, class(ind)); % convert back to 1-based indices
             end
@@ -62,11 +46,10 @@ classdef MultiIndex
             nRows = size(sub, 1);
             switch obj.n
               case 0
-                ind = ones(nRows, 1);
+                ind = ones(nRows, 1, class(sub));
               case 1
                 ind = sub;
               otherwise
-                nRows = size(sub, 1);
                 assert(size(sub, 2) == obj.n);
                 if isa(sub, 'uint32')
                     ind = zeros(nRows, 1, 'uint32');
