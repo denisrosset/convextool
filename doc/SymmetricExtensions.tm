@@ -7,6 +7,10 @@
   extensions>|<doc-author|<author-data|<author-name|Denis
   Rosset>>>|<doc-date|February 23, 2017>>
 
+  <with|color|red|Note: this document is outdated, and relates to an earlier
+  implementation of the symmetric extensions. Still, the main definitions are
+  relevant.>
+
   <paragraph*|Notation. \V>We work with finite Hilbert spaces. For a Hilbert
   space <math|\<cal-H\>> of dimension <math|d>,
   <math|<math-ss|Lin><around*|(|\<cal-H\>|)>> is the set of linear operators

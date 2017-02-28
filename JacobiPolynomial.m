@@ -4,10 +4,10 @@ classdef JacobiPolynomial
 % Modern object-oriented formulation with parts taken from:
 %
 % - the LGPL library by John Burkardt
-% https://people.sc.fsu.edu/~jburkardt/m_src/jacobi_polynomial/jacobi_polynomial.html
-% - QETLAB
+%   https://people.sc.fsu.edu/~jburkardt/m_src/jacobi_polynomial/jacobi_polynomial.html
+% - QETLAB (2-Clause BSD)
 %
-% Placed under LGPL.
+% The LGPL of Burkardt prevails.
    
     properties(SetAccess = immutable)
         n;     % degree of the Jacobi polynomial
