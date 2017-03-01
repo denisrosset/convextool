@@ -1,7 +1,7 @@
-function set = AbsoluteRobustnessConeC(def)
+function set = AbsoluteRobustnessConeC(dims, def)
 % AbsoluteRobustnessConeC Outer approximation of the absolute robustness entanglement measure cone
 %
-% {nu rho} = AbsoluteRobustnessConeC([dA dB]) returns the cone such that
+% {nu rho} = AbsoluteRobustnessConeC([dA dB], def) returns the cone such that
 %
 % - rho is a bipartite density matrix, ordered such that the
 %   product state rhoAB = rhoA (x) rhoB = kron(rhoA, rhoB)
@@ -10,7 +10,13 @@ function set = AbsoluteRobustnessConeC(def)
 %
 % The absolute robustness is computed with respect to a formulation of
 % the separable cone given in the parameter 'def', obtained by SeparableConeDef.
-    dims = def.dims;
+%
+% If 'def' is omitted, then it gets the default value SeparableConeDef(dims, 'exact'),
+% which will only works for dA*dB <= 6.
+    if nargin < 2
+        def = SeparableConeDef(dims, 'exact');
+    end
+    assert(isequal(dims, def.dims));
     dA = dims(1);
     dB = dims(2);
     d = dA*dB;

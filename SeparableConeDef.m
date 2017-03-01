@@ -9,6 +9,7 @@ classdef SeparableConeDef
         dB;        % Dimension of the second subsystem B
         
         approx;    % Either 'inner', 'outer' or 'approx'
+                   %
                    % 'outer' is the Doherty-type symmetric extension
                    % 'exact' is valid only for dA*dB <= 6, and sets
                    %         k = 1 and 'ppt' = [1]
@@ -79,6 +80,13 @@ classdef SeparableConeDef
             def.dims = dims(:)';
             def.dA = def.dims(1);
             def.dB = def.dims(2);
+            if nargin < 2
+                if def.dA * def.dB > 6 && def.dA > 1 && def.dB > 1
+                    error('No exact formulations exist for dA*dB > 6. Specify approximation type.');
+                else
+                    approx = 'exact';
+                end
+            end
             switch approx
               case 'exact'
                 if def.dA * def.dB > 6 && def.dA > 1 && def.dB > 1

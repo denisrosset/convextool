@@ -74,7 +74,7 @@ cvx_begin
             % constraint: entanglement cone
             def = SeparableConeDef([dX dY], 'exact');
             {nu(a,b) Pi(:,:,a,b)} == NegativityConeC([dX dY])
-            % replace by GeneralizedRobustnessConeC(SeparableConeDef([dX dY], 'exact'))
+            % replace by GeneralizedRobustnessConeC([dX dY])
             % or any of the other entanglement measure cones
             sum_nu = sum_nu + nu(a,b);
         end

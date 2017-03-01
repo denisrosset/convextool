@@ -11,10 +11,6 @@ rho0 = eye(4)/4;
 v = 1/2;
 werner = v * rho + (1 - v) * rho0;
 
-% the random robustness uses a formulation of the separable cone,
-% which we create here. It also provides the subsystem dimensions.
-def = SeparableConeDef([dA dB], 'exact');
-
 % formulating and solving the problem
 cvx_clear
 cvx_begin sdp
@@ -27,10 +23,10 @@ cvx_begin sdp
 
     subject to
     W: rho == werner
-    {nu rho} == RandomRobustnessConeC(def);
+    {nu rho} == RandomRobustnessConeC([dA dB]);
     % try also
-    % {nu rho} == AbsoluteRobustnessConeC(def);
-    % {nu rho} == GeneralizedRobustnessConeC(def);
+    % {nu rho} == AbsoluteRobustnessConeC([dA dB]);
+    % {nu rho} == GeneralizedRobustnessConeC([dA dB]);
     % {nu rho} == DUBConeC([dA dB]);
     % {nu rho} == NegativityConeC([dA dB]);
     

@@ -10,8 +10,7 @@ for dA = 2:3
             cvx_clear
             cvx_begin sdp quiet
             variable nu nonnegative
-            def = SeparableConeDef([dA dB], 'exact');
-            {nu density} == AbsoluteRobustnessConeC(def);
+            {nu density} == AbsoluteRobustnessConeC([dA dB]);
             minimize nu
             cvx_end
             assert(abs(exactValue - nu) < 1e-8);
