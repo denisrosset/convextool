@@ -10,7 +10,7 @@ pZ = (I2 + s_z)/2;
 mZ = (I2 - s_z)/2;
 
 % Alice inputs
-X = {pX mX pY mY pZ mZ};
+X = {I2/2 pX pY pZ};
 % Bob inputs
 Y = X;
 
@@ -35,7 +35,18 @@ nY = length(Y);
 nA = length(A);
 nB = length(B);
 
+% x in rows and y in columns
+validXY = [1 0 0 1
+           0 1 0 0
+           0 0 1 0
+           1 0 0 1];
+
+Pabi = reshape(Pabxy, [nA nB nX*nY]);
+Pabi = Pabi(:,:,find(validXY(:)));
+[validX validY] = find(validXY > 0);
+nI = sum(validXY(:) > 0);
 % serious stuff begins here
+cvx_solver sdpt3
 cvx_clear
 cvx_begin
 
@@ -51,20 +62,20 @@ cvx_begin
     subject to
 
     % we first compute the left hand side of the constraint
-    expressions Pideal(nA,nB,nX,nY) nonnegative
-    for x = 1:nX
-        for y = 1:nY
-            inputStates = kron(X{x}, Y{y});
-            for a = 1:nA
-                for b = 1:nB
-                    Pideal(a,b,x,y) = trace(inputStates * Pi(:,:,a,b));
-                end
+    expressions Pideal(nA,nB,nI) nonnegative
+    for i = 1:nI
+        x = validX(i);
+        y = validY(i);
+        inputStates = kron(X{x}, Y{y});
+        for a = 1:nA
+            for b = 1:nB
+                Pideal(a,b,i) = trace(inputStates * Pi(:,:,a, b));
             end
         end
     end
 
     % and here is the constraint: the effective POVM reproduces the correlations
-    beta: Pideal == Pabxy
+    beta: Pideal == Pabi
 
     % now, let's find the lower bound on the entanglement measure
     sum_nu = 0;
@@ -108,4 +119,4 @@ disp('')
 
 disp('Recomputing the MDIEW value')
 
-dot(beta(:), Pabxy(:))
+dot(beta(:), Pabi(:))
