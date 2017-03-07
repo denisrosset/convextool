@@ -12,3 +12,12 @@ rho == singlet
 minimize nu
 cvx_end
 assert(abs(nu - 1/2) < 1e-7);
+
+density = RandomSeparableState([2 2]);
+cvx_solver sdpt3
+cvx_begin sdp quiet
+    variable nu nonnegative
+    {nu density} == NegativityConeC([dA dB]);
+    minimize nu
+cvx_end
+assert(nu < 1e-8);

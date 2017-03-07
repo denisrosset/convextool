@@ -25,3 +25,16 @@ for a = [1/3 1/2 2/3]
     cvx_end
     assert(abs(nu - exactValue) < 1e-7);
 end
+
+for dA = 2:3
+    for dB = 2:3
+        density = RandomSeparableState([dA dB]);
+        cvx_solver sdpt3
+        cvx_begin sdp quiet
+            variable nu nonnegative
+            {nu density} == DUBConeC([dA dB]);
+            minimize nu
+        cvx_end
+        assert(log2(nu) < 1e-6);
+    end
+end

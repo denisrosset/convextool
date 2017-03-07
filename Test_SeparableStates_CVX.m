@@ -1,6 +1,6 @@
 % Tests that random separable states are inside the Doherty approximated cone
-for dA = 2:5
-    for dB = 2:5
+for dA = 2:4
+    for dB = 2:4
         rhoAB = RandomSeparableState([dA dB]);
         def = SeparableConeDef([dA dB], 'outer', 2, 'ppt', 'doherty');
         cvx_solver mosek

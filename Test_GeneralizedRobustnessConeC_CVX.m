@@ -1,7 +1,7 @@
 for dA = 2:3
     for dB = 2:3
         if dA*dB < 9 % when the PPT criterion is exact
-            % generate a random qubit-qubit pure state
+                     % generate a random qubit-qubit pure state
             pureState = (rand(dA*dB, 1)*2 - 1) + 1i * (rand(dA*dB, 1)*2 - 1);
             pureState = pureState / norm(pureState);
             exactValue = GeneralizedRobustnessPureState(pureState, [dA dB]);
@@ -9,11 +9,20 @@ for dA = 2:3
             density = pureState * pureState';
             cvx_solver sdpt3
             cvx_begin sdp quiet
-            variable nu nonnegative
-            {nu density} == GeneralizedRobustnessConeC([dA dB]);
-            minimize nu
+                variable nu nonnegative
+                {nu density} == GeneralizedRobustnessConeC([dA dB]);
+                minimize nu
             cvx_end
             assert(abs(exactValue - nu) < 1e-8);
+            
+            density = RandomSeparableState([dA dB]);
+            cvx_solver sdpt3
+            cvx_begin sdp quiet
+                variable nu nonnegative
+                {nu density} == GeneralizedRobustnessConeC([dA dB]);
+                minimize nu
+            cvx_end
+            assert(nu < 1e-8);
         end
     end
 end
