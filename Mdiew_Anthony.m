@@ -1,5 +1,6 @@
 params = perfect_params;
 
+filename = struct('name', {'Data/C0.txt'});
 
 inputs_order = [1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 5 5 5 5 5 5 6 6 6 6 6 6
                 1 1 1 1 2 2 2 2 3 3 3 3 4 4 4 4 6 6 6 6 5 5 5 5 1 2 ...
@@ -44,7 +45,7 @@ dY = 2;
 
 % underlying state
 v = 1;
-rho = WernerState(v);
+rho = Verbanis_WernerState(v);
 
 % Alice and Bob perform a Bell measurement
 % the variable A is a cell(1,4) with A{a} 4x4 Hermitian POVM elements
