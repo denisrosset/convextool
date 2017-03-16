@@ -58,7 +58,7 @@ classdef MultiIndex
                         ind = ind + obj.cumProd(i) * (sub(:, i) - 1);
                     end
                 else
-                    ind = (double(obj.cumProd) * (sub' - 1) + 1)';
+                    ind = cast((obj.cumProd * (sub' - 1) + 1)', class(sub));
                 end
             end
         end
