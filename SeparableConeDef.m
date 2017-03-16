@@ -271,7 +271,7 @@ classdef SeparableConeDef
             B2B1A_B2B1A = MultiIndex([dB2*dB1*dA dB2*dB1*dA]);
             Bsym_A_Bsym_A = MultiIndex([dBsym dA dBsym dA]);                       
             nEqs = (dPPT+1)*dPPT/2;
-            ApptSym = sparse(nEqs, dPPT^2);
+            ApptSymT = sparse(dPPT^2, nEqs);
             AtauSymT = sparse(dBsym*dA*dBsym*dA, nEqs);
             i = 1;
             for r = 1:dPPT
@@ -287,10 +287,11 @@ classdef SeparableConeDef
                 rBsym = sym.subToIndSym(rBFullInd);
                 cBsym = sym.subToIndSym(cBFullInd);
                 blockRows = i:i+nRows-1;
-                ApptSym(blockRows, B2B1A_B2B1A.subToInd([rows cols])) = eye(nRows);
+                ApptSymT(B2B1A_B2B1A.subToInd([rows cols]), blockRows) = eye(nRows);
                 AtauSymT(Bsym_A_Bsym_A.subToInd([rBsym rA cBsym cA]), blockRows) = eye(nRows);
                 i = i + nRows;
             end
+            ApptSym = ApptSymT.';
             AtauSym = AtauSymT.';
         end
         
