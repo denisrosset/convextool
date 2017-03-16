@@ -1,6 +1,8 @@
 function rho = MultiSeparableConeC(def)
 % MultiSeparableConeC Doherty approximation of the cone of multipartite separable operators
 %
+% Source: Doherty et al., DOI 10.1103/PhysRevA.71.032333
+%
 % INPUTS
 % def        Multipartite separable cone approx. definition, see MultiSeparableConeDef
 %

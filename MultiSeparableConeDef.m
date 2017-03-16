@@ -18,6 +18,8 @@ classdef MultiSeparableConeDef
         function def = MultiSeparableConeDef(dims, copies, cuts)
         % MultiSeparableConeDef Defines an outer approximation of the multipartite separable cone
         %
+        % Source: Doherty et al., DOI 10.1103/PhysRevA.71.032333
+        %
         % INPUTS
         %
         % dims    = [d1 d2 ... dn] Dimensions of the subsystems composing the symmetric cone
