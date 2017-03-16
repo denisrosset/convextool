@@ -23,3 +23,15 @@ for i = 1:3
         assert(abs(v - vs(i)) < 1e-5);
     end
 end
+
+for i = 1:3
+    def = MultiSeparableConeDef([2 2], [1 ks(i)]);
+    cvx_clear
+    cvx_begin sdp quiet
+        variable v;
+        maximize(v)
+        subject to
+        rho0*(1-v) + singlet*v == MultiSeparableConeC(def)
+    cvx_end
+    assert(abs(v - vs(i)) < 1e-5);
+end
