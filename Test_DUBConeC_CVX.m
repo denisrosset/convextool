@@ -29,7 +29,6 @@ end
 for dA = 2:3
     for dB = 2:3
         density = RandomSeparableState([dA dB]);
-        cvx_solver sdpt3
         cvx_begin sdp quiet
             variable nu nonnegative
             {nu density} == DUBConeC([dA dB]);

@@ -46,7 +46,6 @@ Pabi = Pabi(:,:,find(validXY(:)));
 [validX validY] = find(validXY > 0);
 nI = sum(validXY(:) > 0);
 % serious stuff begins here
-cvx_solver sdpt3
 cvx_clear
 cvx_begin
 

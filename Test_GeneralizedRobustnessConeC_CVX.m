@@ -7,7 +7,6 @@ for dA = 2:3
             exactValue = GeneralizedRobustnessPureState(pureState, [dA dB]);
             % to compare to the conic optimization value
             density = pureState * pureState';
-            cvx_solver sdpt3
             cvx_begin sdp quiet
                 variable nu nonnegative
                 {nu density} == GeneralizedRobustnessConeC([dA dB]);
@@ -16,7 +15,6 @@ for dA = 2:3
             assert(abs(exactValue - nu) < 1e-8);
             
             density = RandomSeparableState([dA dB]);
-            cvx_solver sdpt3
             cvx_begin sdp quiet
                 variable nu nonnegative
                 {nu density} == GeneralizedRobustnessConeC([dA dB]);
