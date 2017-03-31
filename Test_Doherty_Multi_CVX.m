@@ -24,13 +24,11 @@ cuts = [1 0 0
         2 1 0];
         
 def = MultiSeparableConeDef([2 2 2], [2 1 1], cuts);
-dtau = def.symmetricExtensionSize;
 cvx_clear
 cvx_begin sdp
-    variable tau(dtau, dtau) hermitian
     variable nu nonnegative
     minimize nu
-    rho + eye(8) * nu  == MultiSeparableConeC(def);
+    rho + eye(8) * nu == MultiSeparableConeC(def);
 cvx_end
     
 assert(nu > 0);
