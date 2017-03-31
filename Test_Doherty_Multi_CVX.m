@@ -17,11 +17,11 @@ end
 rho = rho / 4;
 
 % all the ppt cuts
-cuts = [1 0 0
-        2 0 0
-        0 1 0
-        1 1 0
-        2 1 0];
+cuts = [1 0 0   % TA1
+        2 0 0   % TA1 TA2
+        0 1 0   % TB1
+        1 1 0   % TA1 TB1
+        2 1 0]; % TA1 TA2 TB1
         
 def = MultiSeparableConeDef([2 2 2], [2 1 1], cuts);
 cvx_clear
