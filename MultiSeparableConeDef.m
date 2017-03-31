@@ -47,6 +47,17 @@ classdef MultiSeparableConeDef
             def.cuts = cuts;
         end
 
+        function dTau = symmetricExtensionSize(def)
+            n = def.n;
+            Stau = cell(1, n); % s is the symmetric subspace over all copies
+            dtau = zeros(1, n);
+            for i = 1:n
+                Stau{i} = SymmetricSubspace(def.dims(i), def.copies(i));
+                dtau(i) = Stau{i}.dim;
+            end
+            dTau = prod(dtau);
+        end
+        
         function [ApptSym AtauSym Dppt] = ConstraintPPTCutSym(def, p)
         % equality constraints that express that
         % tau^(partial transposes) == state

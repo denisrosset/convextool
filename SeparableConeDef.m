@@ -34,9 +34,6 @@ classdef SeparableConeDef
         pptCuts;   % integer vector enumerating the cuts corresponding to the PPT constraints
                    % When ppt = 'doherty' or 'navascues', see interpretation above,
                    % otherwise pptCuts = ppt.
-        
-        useSym;    % Whether to use the symmetric subspace (default: 1)
-        
     end
     
     methods
@@ -51,8 +48,12 @@ classdef SeparableConeDef
         % k          = number of copies of subsystem B in the extension
         % 
         % Additional properties are given each by a key/value pair. Possible keys
-        % are 'ppt', 'useSym', and are explained in the 'properties' section of
-        % 'SeparableConeDef.m'
+        % are 'ppt', as explained in the 'properties' section of
+        % 'SeparableConeDef.m'.
+        %
+        % (Right now, we don't have additional properties; we could
+        % add the possibility to work in a nonsymmetrized basis for
+        % easier verification).
         %
         % Examples
         %
@@ -68,7 +69,7 @@ classdef SeparableConeDef
         %
         % To use a formulation without symmetry handling, write:
         %   
-        % def = SeparableConeDef([3 3], 'outer', 2, 'ppt', 'doherty', 'useSym', 0)
+        % def = SeparableConeDef([3 3], 'outer', 2, 'ppt', 'doherty')
         %
         % To obtain the PPT exact formulation for dA * dB <= 6, write:
         % def = SeparableConeDef([dA dB], 'exact')
@@ -104,7 +105,6 @@ classdef SeparableConeDef
                 def.approx = approx;
                 def.ppt = [];
                 def.pptCuts = [];
-                def.useSym = 1;
             end
             assert(def.k >= 1);
             
@@ -128,11 +128,6 @@ classdef SeparableConeDef
                         def.pptCuts = unique(value(:)');
                         assert(all(def.pptCuts >= 1) && all(def.pptCuts <= def.k));
                     end
-                  case 'useSym'
-                    if ~isequal(value, 0) && ~isequal(value, 1)
-                        error('Option useSym should be 0/false or 1/true');
-                    end
-                    def.useSym = value;
                   otherwise
                     warning(['Unsupported option: ' toString(key)]);
                 end

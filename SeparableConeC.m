@@ -9,10 +9,6 @@ function rho = SeparableConeC(def)
 %            The A,B basis ordering is such that a product state
 %            rho = rhoA (x) rhoB = kron(rhoA, rhoB)
     
-    if ~def.useSym
-        error('For now, we only support the symmetric form.');
-    end
-    
     dims = def.dims;
     dA = dims(1);
     dB = dims(2);

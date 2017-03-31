@@ -10,21 +10,22 @@ psiplus = [0 0 0 0
            0 1 1 0
            0 1 1 0
            0 0 0 0]/2;
-for useSym = 1 % TODO restore
-    def = SeparableConeDef([2 2], 'outer', 2, 'ppt', [], 'useSym', useSym);
-    cvx_clear
-    cvx_begin sdp quiet
-        variable v nonnegative
-        maximize(v)
-        subject to
-        variable rhoAB(4,4) hermitian
-        rhoAB >= 0
-        rhoAB == state00*(1-v) + psiplus*v
-        rhoAB == SeparableConeC(def);
-    cvx_end
-    assert(abs(v - 2/3) < 1e-5);
-end
 
+% using the bipartite code
+def = SeparableConeDef([2 2], 'outer', 2, 'ppt', []);
+cvx_clear
+cvx_begin sdp quiet
+    variable v nonnegative
+    maximize(v)
+    subject to
+    variable rhoAB(4,4) hermitian
+    rhoAB >= 0
+    rhoAB == state00*(1-v) + psiplus*v
+    rhoAB == SeparableConeC(def);
+cvx_end
+assert(abs(v - 2/3) < 1e-5);
+
+% using the multipartite code
 def = MultiSeparableConeDef([2 2], [1 2], []);
 cvx_clear
 cvx_begin sdp quiet
