@@ -9,8 +9,8 @@ function rho = MultiSeparableConeC(def)
 % OUTPUTS
 % rho        Complex (dA*dB*...)x(dA*dB*...) matrix representing the AB... system
 %            The A,B,... basis ordering is such that a product state
-%            rho = rhoA (x) rhoB (x) ... = kron(rhoA, kron(rhoB, ...))
-       
+%            rho = rhoA (x) rhoB (x) ... = kron(..., kron(rhoB, rhoA))
+%            So CURRENTLY THE OPPOSITE OF THE SEPARABLE CONE IMPLEMENTATION
     d = prod(def.dims);    
     [CR_AtauSym CR_Arho Dtau] = def.ConstraintRepresentsSym;
     nPPT = size(def.cuts, 1);
