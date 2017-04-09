@@ -1,4 +1,4 @@
-function CONS = MultiSeparableConeY(def, rho)
+function [rho CONS] = MultiSeparableConeY(def)
 % MultiSeparableConeC Doherty approximation of the cone of multipartite separable operators
 %
 % Source: Doherty et al., DOI 10.1103/PhysRevA.71.032333
@@ -22,16 +22,34 @@ function CONS = MultiSeparableConeY(def, rho)
     pptvar = cell(1, nPPT);
     
     tauSym = sdpvar(Dtau, Dtau, 'hermitian', 'complex'); % symmetric extension in symmetric basis
-    CONS = [SemidefiniteY(rho)
-            SemidefiniteY(tauSym)
-            CR_Arho * rho(:) == CR_AtauSym * tauSym(:)];
+    drho = prod(def.dims);
+    rho = sdpvar(drho, drho, 'hermitian', 'complex');
+    for cstr = 1:size(CR_Arho, 1)
+        ind = find(CR_Arho(cstr, :));
+        assert(length(ind) == 1);
+        [r c] = ind2sub([drho drho], ind);
+        rho(r,c) = CR_AtauSym(cstr,:)*tauSym(:);
+        if r ~= c
+            rho(c,r) = conj(CR_AtauSym(cstr,:)*tauSym(:));
+        end
+    end
+   
+    CONS = [SemidefiniteY(tauSym)];   
         
     for p = 1:nPPT
-            [ApptSym AtauSym Dppt] = def.ConstraintPPTCutSym(def.cuts(p,:));
-            ppt = sdpvar(Dppt, Dppt, 'hermitian', 'complex');
-            CONS = [CONS
-                    SemidefiniteY(ppt)
-                    ApptSym * ppt(:) == AtauSym * tauSym(:)];
-            pptvar{p} = ppt;
+        [ApptSym AtauSym Dppt] = def.ConstraintPPTCutSym(def.cuts(p,:));
+        ppt = sdpvar(Dppt, Dppt, 'hermitian', 'complex');
+        for cstr = 1:size(ApptSym, 1)
+            ind = find(ApptSym(cstr, :));
+            assert(length(ind) == 1);
+            [r c] = ind2sub([Dppt Dppt], ind);
+            ppt(r,c) = AtauSym(cstr,:)*tauSym(:);
+            if r ~= c
+                ppt(c,r) = conj(AtauSym(cstr,:)*tauSym(:));
+            end
+        end
+        CONS = [CONS
+                SemidefiniteY(ppt)];
+        pptvar{p} = ppt;
     end
 end
