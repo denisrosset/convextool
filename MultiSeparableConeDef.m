@@ -58,12 +58,15 @@ classdef MultiSeparableConeDef
             dTau = prod(dtau);
         end
         
-        function [ApptSym AtauSym Dppt] = ConstraintPPTCutSym(def, p)
+        function [ApptSym AtauSym Dppt] = ConstraintPPTCutSym(def, p, onlyUpperTriangle)
         % equality constraints that express that
         % tau^(partial transposes) == state
         % in their respective symmetric subspaces
         %
         % the constraint is ApptSym * pptSym(:) == AtauSym * tauSym(:)
+            if nargin < 3
+                onlyUpperTriangle = true;
+            end
             n = def.n;
             p = p(:)';
             q = def.copies - p;
@@ -93,12 +96,20 @@ classdef MultiSeparableConeDef
             Mtau = MultiIndex(dtau);
             MpptMat = MultiIndex([Dppt Dppt]);
             MtauMat = MultiIndex([dtau dtau]);
-            nEqs = (Dppt+1)*Dppt/2;
+            if onlyUpperTriangle
+                nEqs = (Dppt+1)*Dppt/2;
+            else 
+                nEqs = Dppt^2;
+            end
             ApptSymT = sparse(Dppt^2, nEqs);
             AtauSymT = sparse(Dtau^2, nEqs);
             ieq = 1;
             for r = 1:Dppt
-                cols = (r:Dppt)'; % we only need constraints for the upper triangle
+                if onlyUpperTriangle
+                    cols = (r:Dppt)'; % we only need constraints for the upper triangle
+                else
+                    cols = (1:Dppt)';
+                end
                 nEqs = length(cols);
                 rows = r*ones(nEqs, 1);
                 rowInd = Mppt.indToSub(rows);
@@ -121,7 +132,7 @@ classdef MultiSeparableConeDef
             AtauSym = AtauSymT.';
         end
 
-        function [AtauSym Arho Dtau] = ConstraintRepresentsSym(def)
+        function [AtauSym Arho Dtau] = ConstraintRepresentsSym(def, onlyUpperTriangle)
         % equality constraints that express that
         % trace_copies(tauFull) = rho
         % with tau represented in the symmetric subspace as tauSym
@@ -129,6 +140,9 @@ classdef MultiSeparableConeDef
         % the constraint is Arho * rho(:) == AtauSym * tauSym(:)
 
         % comments specify the correspondence with SeparableConeDef (SCD)
+            if nargin < 2
+                onlyUpperTriangle = true;
+            end
             d = prod(def.dims);
             n = def.n;
             Stau = cell(1, n); % the symmetric subspace over all copies
@@ -151,7 +165,11 @@ classdef MultiSeparableConeDef
             Drest = prod(drest); % dimension over which we perform the partial trace
             Dtau = prod(dtau);
             traceOver = (1:Drest)';
-            nEqs = (d+1)*d/2; % upper triangle dimension
+            if onlyUpperTriangle
+                nEqs = (d+1)*d/2; % upper triangle dimension
+            else
+                nEqs = d^2;
+            end
             Arho = sparse(nEqs, d^2);
             AtauSymT = sparse(Dtau^2, nEqs);
             ieq = 1;
@@ -164,7 +182,12 @@ classdef MultiSeparableConeDef
                     riFullSub = [rrho(i)*ones(Drest, 1) Mrest{i}.indToSub(rrest(:,i))];
                     rsym(:,i) = Stau{i}.subToIndSym(riFullSub);
                 end
-                for c = r:d % restrict constraints to upper triangle
+                if onlyUpperTriangle
+                    startIndex = r;
+                else
+                    startIndex = 1;
+                end
+                for c = startIndex:d % restrict constraints to upper triangle
                     crho = Mrho.indToSub(c);
                     crest = MrestSplit.indToSub(traceOver);
                     csym = zeros(Drest, n);
