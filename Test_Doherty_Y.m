@@ -16,10 +16,11 @@ C2 = C2';
 C3 = C3';
 VsigmaplusV = proj(C1(:))/3 + proj(C2(:))/3 + proj(C3(:))/3;
 
-settings = sdpsettings('removeequalities', 1);
+settings = sdpsettings; %('removeequalities', 1);
 % using the bipartite definition
-def = SeparableConeDef([3 3], 'outer', 3, 'ppt', 'doherty');
+def = SeparableConeDef([3 3], 'outer', 2, 'ppt', 'doherty');
 yalmip('clear');
+v = sdpvar;
 CONS = SeparableConeY(def, 2*psiplus/7 + v * sigmaplus/7 + (5-v)*VsigmaplusV/7);
 solvesdp(CONS, -v, settings);
 v = double(v);

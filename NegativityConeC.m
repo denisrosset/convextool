@@ -1,4 +1,4 @@
-function set = NegativityConeC(dims)
+function set = NegativityConeC(dims, varargin)
 % NegativityConeC Negativity entanglement measure cone
 %
 % {nu rho} = NegativityConeC([dA dB]) returns the cone such that
@@ -9,6 +9,8 @@ function set = NegativityConeC(dims)
 %
 % For rho not normalized, the cone formulation is equivalent to
 % nu >= trace(rho)*negativity(rho/trace(rho))
+%
+% After "dims = [dA dB]", additional parameters are ignored.
 %
 % The negativity was studied in http://link.aps.org/doi/10.1103/PhysRevA.59.141
 % and its SDP formulation introduced in http://link.aps.org/doi/10.1103/PhysRevLett.111.030501
