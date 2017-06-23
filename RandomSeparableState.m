@@ -13,4 +13,5 @@ function rho = RandomSeparableState(dims, n)
         rho = rho + rand * contrib*contrib';
     end
     rho = rho / trace(rho);
+    rho = (rho + rho')/2;
 end
