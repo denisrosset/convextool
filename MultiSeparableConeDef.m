@@ -67,9 +67,14 @@ classdef MultiSeparableConeDef
             if nargin < 3
                 onlyUpperTriangle = true;
             end
+            % the whole algorithm below was written for 
+            % rA (X) rB = kron(rB, rA)
+            % so we flip the dimensions
             n = def.n;
-            p = p(:)';
-            q = def.copies - p;
+            p = fliplr(p(:)');
+            dims = fliplr(def.dims);
+            copies = fliplr(def.copies);
+            q = copies - p;
             Stau = cell(1, n); % s is the symmetric subspace over all copies
             Sp = cell(1, n);   % p is the symmetric subspace over the ppt affected part
             Sq = cell(1, n);   % q is the symmetric subspace over the ppt nonaffected part
@@ -79,9 +84,9 @@ classdef MultiSeparableConeDef
             dq = zeros(1, n);
             dpq = zeros(1, n); % dimpq(i) = dimp(i) * dimq(i) dimension of the ppt result
             for i = 1:n
-                Stau{i} = SymmetricSubspace(def.dims(i), def.copies(i));
-                Sp{i} = SymmetricSubspace(def.dims(i), p(i));
-                Sq{i} = SymmetricSubspace(def.dims(i), q(i));
+                Stau{i} = SymmetricSubspace(dims(i), copies(i));
+                Sp{i} = SymmetricSubspace(dims(i), p(i));
+                Sq{i} = SymmetricSubspace(dims(i), q(i));
                 dtau(i) = Stau{i}.dim;
                 dp(i) = Sp{i}.dim;
                 dq(i) = Sq{i}.dim;
@@ -143,22 +148,27 @@ classdef MultiSeparableConeDef
             if nargin < 2
                 onlyUpperTriangle = true;
             end
-            d = prod(def.dims);
+            % the whole algorithm below was written for 
+            % rA (X) rB = kron(rB, rA)
+            % so we flip the dimensions
             n = def.n;
+            dims = fliplr(def.dims);
+            copies = fliplr(def.copies);
+            d = prod(dims);
             Stau = cell(1, n); % the symmetric subspace over all copies
             Mfull = cell(1, n); % the subindices for the (nonsymmetrized) copies
             Mrest = cell(1, n); % the subindices for the part we perform the partial trace over
             drest = zeros(1, n); % dimension over which we perform partial trace
             dtau = zeros(1, n); % dimension of the symmetric subspace for each subsystem
             for i = 1:n
-                Stau{i} = SymmetricSubspace(def.dims(i), def.copies(i));
-                Mrest{i} = MultiIndex([def.dims(i) * ones(1, def.copies(i)-1)]);
-                Mfull{i} = MultiIndex([def.dims(i) * ones(1, def.copies(i))]);
-                Msplit{i} = MultiIndex([def.dims(i) def.dims(i)^(def.copies(i)-1)]);
+                Stau{i} = SymmetricSubspace(dims(i), copies(i));
+                Mrest{i} = MultiIndex([dims(i) * ones(1, copies(i)-1)]);
+                Mfull{i} = MultiIndex([dims(i) * ones(1, copies(i))]);
+                Msplit{i} = MultiIndex([dims(i) dims(i)^(copies(i)-1)]);
                 dtau(i) = Stau{i}.dim;
-                drest(i) = def.dims(i)^(def.copies(i)-1);
+                drest(i) = dims(i)^(copies(i)-1);
             end
-            Mrho = MultiIndex(def.dims);
+            Mrho = MultiIndex(dims);
             MrhoMat = MultiIndex([d d]);
             MrestSplit = MultiIndex(drest);
             MtauMatSplit = MultiIndex([dtau dtau]);               
