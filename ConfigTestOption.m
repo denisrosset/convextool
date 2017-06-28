@@ -3,6 +3,8 @@ function value = ConfigTestOption(key)
     verbose = 1;
     
     switch solver
+      case 'scs'
+        tolscale = 10;
       otherwise
         tolscale = 1;
     end
