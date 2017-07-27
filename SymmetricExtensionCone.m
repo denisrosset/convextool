@@ -54,13 +54,6 @@ function [Cons MainCons PPTCons] = SymmetricExtensionCone(coeffs, k, useSym, use
     for j = 1:k
         PPT{j} = sparse(dA*dBPPT(j)*fieldDim, dA*dBPPT(j)*fieldDim);
     end
-    if useSym
-        drange = dBext^2;
-        if usePPT
-            drange = drange + sum(dBPPT.^2);
-        end
-        range = zeros(drange, 0);
-    end
     binds = SymmetricCanonicalIndices(dB^2, k);
     for bind = binds
         bs = cell(1, k);
