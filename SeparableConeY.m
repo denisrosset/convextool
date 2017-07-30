@@ -47,8 +47,7 @@ function CONS = SeparableConeY(def, rho)
     else
         CONS = [Arho * rho(:) == AtauSym * tauSym(:)];
     end
-    CONS = [SemidefiniteY(rho)
-            SemidefiniteY(tauSym)
+    CONS = [SemidefiniteY(tauSym)
             CONS];
     for p = def.pptCuts
         k1 = p;

@@ -59,7 +59,7 @@ function rho = SeparableConeC(def)
         [ApptSym AtauSym] = def.ConstraintPPTCutSym(p);
         ApptSym * ppt(:) == AtauSym * tauSym(:)
     end
-    rho >= 0
+    %    rho >= 0
     tauSym >= 0
     [AtauSym Arho ArhoAIdB] = def.ConstraintRepresentsSym;
     if isequal(def.approx, 'inner')
